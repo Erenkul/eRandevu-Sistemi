@@ -1,0 +1,95 @@
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.schedule-item:hover {
+    border-color: var(--color-outline-variant);
+    box-shadow: var(--shadow-sm);
+}
+
+.schedule-time {
+    min-width: 70px;
+    text-align: center;
+}
+
+.schedule-time-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.schedule-time-duration {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+}
+
+.schedule-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-secondary-light), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.schedule-info {
+    flex: 1;
+}
+
+.schedule-client {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.schedule-service {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.schedule-staff {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+}
+
+.schedule-status {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.schedule-status.confirmed {
+    background-color: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.schedule-status.pending {
+    background-color: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.schedule-status.cancelled {
+    background-color: var(--color-error-light);
+    color: var(--color-error);
+}

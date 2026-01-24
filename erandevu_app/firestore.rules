@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Yardımcı fonksiyonlar
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(businessId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+    
+    function isBusinessStaff(businessId) {
+      return isAuthenticated() && (
+        isOwner(businessId) ||
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.businessId == businessId
+      );
+    }
+    
+    // İşletmeler koleksiyonu
+    match /businesses/{businessId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece sahip güncelleyebilir
+      allow update: if isOwner(businessId);
+      
+      // Sadece giriş yapmış kullanıcılar oluşturabilir
+      allow create: if isAuthenticated() && 
+        request.resource.data.ownerId == request.auth.uid;
+      
+      // Sadece sahip silebilir
+      allow delete: if isOwner(businessId);
+      
+      // Günlük istatistikler alt koleksiyonu
+      match /dailyStats/{statId} {
+        allow read: if isOwner(businessId);
+        allow write: if false; // Sadece Cloud Functions yazabilir
+      }
+    }
+    
+    // Hizmetler koleksiyonu
+    match /services/{serviceId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece işletme sahibi yazabilir
+      allow create, update, delete: if isOwner(resource.data.businessId) || 
+        isOwner(request.resource.data.businessId);
+    }
+    
+    // Personel koleksiyonu
+    match /staff/{staffId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece işletme sahibi yazabilir
+      allow create, update, delete: if isOwner(resource.data.businessId) || 
+        isOwner(request.resource.data.businessId);
+    }
+    
+    // Randevular koleksiyonu
+    match /appointments/{appointmentId} {
+      // İşletme çalışanları okuyabilir
+      allow read: if isBusinessStaff(resource.data.businessId);
+      
+      // Herkes randevu oluşturabilir (public booking)
+      allow create: if true;
+      
+      // Sadece işletme çalışanları güncelleyebilir
+      allow update: if isBusinessStaff(resource.data.businessId);
+      
+      // Sadece işletme sahibi silebilir
+      allow delete: if isOwner(resource.data.businessId);
+    }
+    
+    // Müşteriler koleksiyonu (opsiyonel)
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow create: if true;
+      allow update, delete: if isAuthenticated();
+    }
+  }
+}
