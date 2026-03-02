@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Yardımcı fonksiyonlar
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(businessId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+    
+    function isBusinessStaff(businessId) {
+      // TODO: İleride personel (staff) hesabı girişi eklendiğinde düzeltilecek.
+      // Şu an staff dökümanları addDoc ile oluşturulduğundan ID'leri auth.uid değil.
+      // Eklendiğinde staff dökümanına 'userId' alanı eklenip buradan kontrol edilmeli.
+      return isOwner(businessId);
+    }
+
+    // Kullanıcılar koleksiyonu
+    match /users/{userId} {
+      // Kullanıcılar kendi profillerini okuyup yazabilir
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // İşletmeler koleksiyonu
+    match /businesses/{businessId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece sahip güncelleyebilir
+      allow update, delete: if isOwner(businessId);
+      
+      // Sadece giriş yapmış kullanıcılar oluşturabilir
+      allow create: if isAuthenticated() && 
+        request.resource.data.ownerId == request.auth.uid;
+      
+      // Günlük istatistikler alt koleksiyonu
+      match /dailyStats/{statId} {
+        allow read: if isOwner(businessId);
+        allow write: if false; // Sadece Cloud Functions yazabilir
+      }
+    }
+    
+    // Hizmetler koleksiyonu
+    match /services/{serviceId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece işletme sahibi yazabilir
+      allow create: if isOwner(request.resource.data.businessId);
+      allow update, delete: if isOwner(resource.data.businessId);
+    }
+    
+    // Personel koleksiyonu
+    match /staff/{staffId} {
+      // Herkes okuyabilir (public booking için)
+      allow read: if true;
+      
+      // Sadece işletme sahibi yazabilir
+      allow create: if isOwner(request.resource.data.businessId);
+      allow update, delete: if isOwner(resource.data.businessId);
+    }
+    
+    // Randevular koleksiyonu
+    match /appointments/{appointmentId} {
+      // İşletme çalışanları okuyabilir
+      allow read: if isBusinessStaff(resource.data.businessId);
+      
+      // Herkes randevu oluşturabilir (public booking)
+      allow create: if true;
+      
+      // Sadece işletme çalışanları güncelleyebilir
+      allow update: if isBusinessStaff(resource.data.businessId);
+      
+      // Sadece işletme sahibi silebilir
+      allow delete: if isOwner(resource.data.businessId);
+    }
+    
+    // Müşteriler koleksiyonu
+    match /customers/{customerId} {
+      // Müşterileri sadece işletme personeli okuyup güncelleyebilir
+      allow read, update, delete: if isBusinessStaff(resource.data.businessId);
+      // Public booking sisteminin veya panelin müşteri kaydı atabilmesi için
+      allow create: if true;
+    }
+  }
+}

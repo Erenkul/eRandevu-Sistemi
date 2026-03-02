@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modern Admin Dashboard - Işık Erkek Kuaförü</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "royal-blue": "#2563EB","primary": "#0f172a",
+                        "secondary": "#64748b",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#ffffff","canvas-light": "#f8fafc","canvas-dark": "#f8fafc","accent-blue": "#eff6ff",
+                        "border-subtle": "#e2e8f0",
+                    },
+                    fontFamily: {
+                        "sans": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "soft": "0 2px 4px rgba(0,0,0,0.02), 0 1px 0 rgba(0,0,0,0.02)",
+                        "glass": "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+                        "fab": "0 8px 20px -4px rgba(37, 99, 235, 0.5)",
+                    },
+                    borderRadius: {
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glassmorphic {
+                @apply bg-white border border-slate-100;
+            }
+            .bento-card {
+                @apply bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 transition-all hover:shadow-md duration-300;
+            }
+            .status-chip {
+                @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border;
+            }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen selection:bg-royal-blue selection:text-white">
+<div class="flex h-screen overflow-hidden">
+<aside class="w-20 lg:w-64 flex flex-col bg-white border-r border-slate-200 h-full z-20">
+<div class="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-transparent">
+<div class="size-10 rounded-xl bg-royal-blue text-white flex items-center justify-center shadow-md shadow-blue-200">
+<span class="material-symbols-outlined text-[24px]">content_cut</span>
+</div>
+<span class="hidden lg:block ml-3 font-bold text-lg tracking-tight text-slate-900">Işık Erkek</span>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-6">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-royal-blue/5 text-royal-blue font-semibold shadow-sm ring-1 ring-blue-100 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="hidden lg:block text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px]">person</span>
+<span class="hidden lg:block text-sm font-medium">Barbers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px]">content_cut</span>
+<span class="hidden lg:block text-sm font-medium">Services</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px]">group</span>
+<span class="hidden lg:block text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px]">calendar_month</span>
+<span class="hidden lg:block text-sm font-medium">Schedule</span>
+</a>
+</nav>
+<div class="p-4 mt-auto border-t border-slate-100">
+<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+<div class="size-9 rounded-full overflow-hidden border border-slate-200 shadow-sm">
+<img alt="Admin Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI2TorSAbsXCRcEm_Mf5Lqt4q7QjEqaoOox1MfKhLIy_s1kKyQKAwKHUfWLORNoAPyW3DY7_jJmUNRaHC65XQW4Y5uH7Dejp4enVbzHpJQYo6qDdfcy1JEHGYULTvIg97XzwxyXGAk8CRY3zKZhdpWx3mo8I1T4Q1cudUVrwuGRLsE63URGLWXvUUXqoTqqiNoOSjddx8bcMkwUzGMXNvmCDiInjd9ECmZFwKb3Karcgjw4b2Htfwqu3hbo08Sjigiw_7MJWWEAP8"/>
+</div>
+<div class="hidden lg:flex flex-col">
+<p class="text-sm font-bold text-slate-900">Admin User</p>
+<p class="text-xs text-slate-400">View Profile</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 overflow-y-auto relative p-6 lg:p-10 bg-slate-50/50">
+<header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
+<div>
+<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Overview</h1>
+<p class="text-slate-500 mt-1 text-sm font-medium">Welcome back, here's what's happening today.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative hidden md:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-royal-blue/20 focus:border-royal-blue w-64 placeholder:text-slate-400 transition-all" placeholder="Search appointments..." type="text"/>
+</div>
+<button class="size-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-royal-blue hover:border-blue-200 shadow-sm transition-all relative">
+<span class="absolute top-2 right-2 size-2 bg-rose-500 rounded-full border-2 border-white"></span>
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+</div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+<div class="bento-card col-span-1 md:col-span-2 relative overflow-hidden group border-l-4 border-l-royal-blue">
+<div class="absolute right-0 top-0 p-6 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+<span class="material-symbols-outlined text-[120px] text-royal-blue">payments</span>
+</div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Revenue</p>
+<div class="flex items-baseline gap-2">
+<h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">2.450</h2>
+<span class="text-xl text-slate-400 font-medium">TL</span>
+</div>
+</div>
+<span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +15%
+                    </span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2 mb-2">
+<div class="bg-royal-blue h-2 rounded-full w-[75%] shadow-[0_2px_8px_rgba(37,99,235,0.25)]"></div>
+</div>
+<p class="text-xs text-slate-400 font-medium">Daily goal: 3.000 TL</p>
+</div>
+<div class="bento-card bg-white border-l-4 border-l-slate-800">
+<div class="flex flex-col h-full justify-between">
+<div class="flex items-center justify-between mb-2">
+<div class="size-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined">event_available</span>
+</div>
+<span class="text-slate-400 text-xs font-semibold">Today</span>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-slate-900 mb-1">12</h3>
+<p class="text-slate-500 text-sm font-medium">Active Appointments</p>
+</div>
+</div>
+</div>
+<div class="bento-card bg-white border-l-4 border-l-rose-500 hover:border-rose-600 transition-colors">
+<div class="flex flex-col h-full justify-between">
+<div class="flex items-center justify-between mb-2">
+<div class="size-10 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center">
+<span class="material-symbols-outlined">cancel</span>
+</div>
+<span class="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-full text-[10px] font-bold">-5%</span>
+</div>
+<div>
+<h3 class="text-3xl font-extrabold text-slate-900 mb-1">1</h3>
+<p class="text-slate-500 text-sm font-medium">Cancellations</p>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+<div class="lg:col-span-3 bento-card p-0 overflow-hidden flex flex-col h-full min-h-[500px]">
+<div class="p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+<h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">calendar_today</span>
+                        Today's Schedule
+                    </h3>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                            All Barbers
+                        </button>
+<button class="px-3 py-1.5 bg-royal-blue text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-blue-600 transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">filter_list</span> Filter
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4 font-semibold border-b border-slate-100">Client</th>
+<th class="px-6 py-4 font-semibold border-b border-slate-100">Service</th>
+<th class="px-6 py-4 font-semibold border-b border-slate-100">Barber</th>
+<th class="px-6 py-4 font-semibold border-b border-slate-100">Time</th>
+<th class="px-6 py-4 font-semibold border-b border-slate-100">Status</th>
+<th class="px-6 py-4 font-semibold border-b border-slate-100 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="group hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">DY</div>
+<span class="text-slate-900 font-semibold">Deniz Yılmaz</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-600">Haircut &amp; Beard</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-slate-500">face</span>
+</div>
+<span class="text-slate-600 text-xs font-medium">Ahmet</span>
+</div>
+</td>
+<td class="px-6 py-4 font-mono font-medium text-slate-900">10:30</td>
+<td class="px-6 py-4">
+<span class="status-chip bg-emerald-50 text-emerald-700 border-emerald-100">
+                                        Confirmed
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-royal-blue p-1 rounded-full hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xs">CÖ</div>
+<span class="text-slate-900 font-semibold">Caner Öz</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-600">Haircut</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-slate-500">face</span>
+</div>
+<span class="text-slate-600 text-xs font-medium">Mehmet</span>
+</div>
+</td>
+<td class="px-6 py-4 font-mono font-medium text-slate-900">11:15</td>
+<td class="px-6 py-4">
+<span class="status-chip bg-amber-50 text-amber-700 border-amber-100">
+                                        Pending
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-royal-blue p-1 rounded-full hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">EA</div>
+<span class="text-slate-900 font-semibold">Emre Aydın</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-600">Beard Trim</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-slate-500">face</span>
+</div>
+<span class="text-slate-600 text-xs font-medium">Ahmet</span>
+</div>
+</td>
+<td class="px-6 py-4 font-mono font-medium text-slate-900">12:00</td>
+<td class="px-6 py-4">
+<span class="status-chip bg-emerald-50 text-emerald-700 border-emerald-100">
+                                        Confirmed
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-royal-blue p-1 rounded-full hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 font-bold text-xs">BT</div>
+<span class="text-slate-900 font-semibold">Burak Tan</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-600">Skin Care</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-slate-500">face</span>
+</div>
+<span class="text-slate-600 text-xs font-medium">Mehmet</span>
+</div>
+</td>
+<td class="px-6 py-4 font-mono font-medium text-slate-900">13:30</td>
+<td class="px-6 py-4">
+<span class="status-chip bg-slate-100 text-slate-600 border-slate-200">
+                                        Completed
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-royal-blue p-1 rounded-full hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="col-span-1 lg:col-span-1 flex flex-col gap-6">
+<div class="bento-card p-6 flex flex-col gap-4">
+<h3 class="font-bold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-royal-blue">trending_up</span>
+                         Popular Services
+                    </h3>
+<div class="space-y-5">
+<div class="group cursor-default">
+<div class="flex justify-between text-sm mb-1.5">
+<span class="font-medium text-slate-700">Haircut</span>
+<span class="font-bold text-royal-blue">75%</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-1.5">
+<div class="bg-royal-blue h-1.5 rounded-full w-[75%] group-hover:shadow-md group-hover:shadow-blue-200 transition-all"></div>
+</div>
+</div>
+<div class="group cursor-default">
+<div class="flex justify-between text-sm mb-1.5">
+<span class="font-medium text-slate-700">Beard Trim</span>
+<span class="font-bold text-royal-blue">45%</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-1.5">
+<div class="bg-royal-blue h-1.5 rounded-full w-[45%] group-hover:shadow-md group-hover:shadow-blue-200 transition-all"></div>
+</div>
+</div>
+<div class="group cursor-default">
+<div class="flex justify-between text-sm mb-1.5">
+<span class="font-medium text-slate-700">Skin Care</span>
+<span class="font-bold text-royal-blue">20%</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-1.5">
+<div class="bg-royal-blue h-1.5 rounded-full w-[20%] group-hover:shadow-md group-hover:shadow-blue-200 transition-all"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bento-card p-6 bg-slate-900 text-white border-none flex-1">
+<h3 class="font-bold mb-4 flex items-center gap-2 text-white">
+<span class="material-symbols-outlined text-yellow-400">bolt</span>
+                        Quick Stats
+                    </h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/5">
+<p class="text-xs text-slate-400 uppercase tracking-wide font-bold mb-1">Weekly</p>
+<p class="text-2xl font-bold">142</p>
+<p class="text-[10px] text-emerald-400 font-medium">+12% vs last week</p>
+</div>
+<div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/5">
+<p class="text-xs text-slate-400 uppercase tracking-wide font-bold mb-1">New</p>
+<p class="text-2xl font-bold">8</p>
+<p class="text-[10px] text-slate-400 font-medium">Clients today</p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/10">
+<div class="flex justify-between items-center mb-2">
+<span class="text-sm text-slate-400 font-medium">Capacity</span>
+<span class="text-sm text-white font-bold">85%</span>
+</div>
+<div class="w-full bg-white/10 rounded-full h-1.5">
+<div class="bg-emerald-400 h-1.5 rounded-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<button class="fixed bottom-8 right-8 bg-royal-blue hover:bg-blue-600 text-white rounded-full px-6 py-4 shadow-fab flex items-center gap-3 transition-all hover:scale-105 active:scale-95 z-50 group">
+<span class="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform duration-300">add</span>
+<span class="font-bold text-sm tracking-wide">NEW APPOINTMENT</span>
+</button>
+</main>
+</div>
+
+</body></html>

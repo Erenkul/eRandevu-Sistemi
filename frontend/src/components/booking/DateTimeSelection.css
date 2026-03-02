@@ -1,0 +1,205 @@
+.datetime-selection {
+    max-width: 900px;
+}
+
+.datetime-selection-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.datetime-selection-subtitle {
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    margin-bottom: 32px;
+}
+
+.datetime-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+@media (max-width: 768px) {
+    .datetime-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Calendar Styles */
+.calendar-section {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.calendar-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.calendar-nav button {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-outline);
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.calendar-nav button:hover {
+    background-color: var(--color-surface-variant);
+    color: var(--color-text-primary);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    padding: 8px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    background: none;
+    color: var(--color-text-primary);
+}
+
+.calendar-day:hover:not(.disabled):not(.selected) {
+    background-color: var(--color-surface-variant);
+}
+
+.calendar-day.today {
+    border: 2px solid var(--color-primary);
+}
+
+.calendar-day.selected {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.calendar-day.disabled {
+    color: var(--color-text-tertiary);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.calendar-day.other-month {
+    color: var(--color-text-tertiary);
+}
+
+/* Time Slots */
+.time-section {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.time-header {
+    margin-bottom: 24px;
+}
+
+.time-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.time-subtitle {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.time-period {
+    margin-bottom: 24px;
+}
+
+.time-period-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.time-slots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.time-slot {
+    padding: 12px;
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+}
+
+.time-slot:hover:not(.disabled):not(.selected) {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-container);
+}
+
+.time-slot.selected {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.time-slot.disabled {
+    background-color: var(--color-surface-variant);
+    color: var(--color-text-tertiary);
+    cursor: not-allowed;
+}

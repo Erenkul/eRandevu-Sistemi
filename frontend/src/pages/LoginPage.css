@@ -1,0 +1,549 @@
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    top: -200px;
+    right: -100px;
+}
+
+.auth-page::after {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    bottom: -100px;
+    left: -50px;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-xl);
+    padding: 48px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    z-index: 1;
+}
+
+.auth-logo {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-logo h1 {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.auth-logo h1 span {
+    font-weight: 400;
+    background: var(--color-text-tertiary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.auth-role-selection {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-role-selection h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.auth-role-selection p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.role-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.role-card {
+    padding: 24px 16px;
+    border: 2px solid var(--color-outline);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    background: none;
+}
+
+.role-card:hover {
+    border-color: var(--color-primary-light);
+    background-color: var(--color-surface-variant);
+    transform: translateY(-2px);
+}
+
+.role-card.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-container);
+}
+
+.role-card-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.role-card.business .role-card-icon {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    color: white;
+}
+
+.role-card.customer .role-card-icon {
+    background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent));
+    color: white;
+}
+
+.role-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.role-card-desc {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+}
+
+.auth-title {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-title h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.auth-title p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.auth-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.auth-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.auth-remember input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+}
+
+.auth-forgot {
+    font-size: 14px;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.auth-forgot:hover {
+    text-decoration: underline;
+}
+
+.auth-submit {
+    margin-top: 16px;
+}
+
+.auth-submit button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.auth-divider span {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--color-outline);
+}
+
+.auth-social {
+    display: flex;
+    gap: 12px;
+}
+
+.auth-social button {
+    flex: 1;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.auth-footer a {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.auth-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.auth-back:hover {
+    color: var(--color-text-primary);
+}
+
+/* Badge for role */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.role-badge.business {
+    background-color: var(--color-primary-container);
+    color: var(--color-primary);
+}
+
+.role-badge.customer {
+    background-color: var(--color-accent-container);
+    color: var(--color-accent);
+}
+
+/* Scrollable container for register form */
+.auth-container-scrollable {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Form field wrapper */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Field error message */
+.field-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.field-error svg {
+    flex-shrink: 0;
+}
+
+/* Field success message */
+.field-success {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #22c55e;
+    margin-top: 4px;
+}
+
+.field-success svg {
+    flex-shrink: 0;
+}
+
+/* Input error state */
+.input-error .input-field {
+    border-color: #ef4444 !important;
+}
+
+/* Password strength indicator */
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.strength-bars {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+
+.strength-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--color-outline);
+    transition: all var(--transition-fast);
+}
+
+.strength-bar.active {
+    background-color: var(--color-primary);
+}
+
+.password-strength span {
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 70px;
+    text-align: right;
+}
+
+/* Terms checkbox */
+.terms-checkbox {
+    margin-top: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+}
+
+.checkbox-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-outline);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    margin-top: 2px;
+}
+
+.checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked+.checkbox-custom::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox-label.error .checkbox-custom {
+    border-color: #ef4444;
+}
+
+.checkbox-text {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.checkbox-text a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.checkbox-text a:hover {
+    text-decoration: underline;
+}
+
+.terms-error {
+    margin-top: 8px;
+    margin-left: 32px;
+}
+
+/* SMS Verification Screen */
+.verify-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.otp-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 32px 0;
+}
+
+.otp-input {
+    width: 48px;
+    height: 56px;
+    border: 2px solid var(--color-outline);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    background-color: var(--color-surface);
+    transition: all var(--transition-fast);
+}
+
+.otp-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-container);
+}
+
+.otp-input:not(:placeholder-shown) {
+    border-color: var(--color-primary-light);
+}
+
+.verify-timer {
+    text-align: center;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-bottom: 24px;
+}
+
+.verify-timer strong {
+    color: var(--color-primary);
+}
+
+.resend-button {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.resend-button:hover {
+    color: var(--color-primary-dark);
+}
+
+.verify-help {
+    text-align: center;
+    margin-top: 24px;
+    padding: 16px;
+    background-color: var(--color-surface-variant);
+    border-radius: var(--radius-md);
+}
+
+.verify-help p {
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+    margin: 0;
+}
+
+/* Disabled button state */
+.auth-submit button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 32px 24px;
+    }
+
+    .otp-input {
+        width: 40px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .otp-container {
+        gap: 8px;
+    }
+}

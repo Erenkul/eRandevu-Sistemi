@@ -1,0 +1,443 @@
+/* Settings Page Styles */
+
+/* Settings Layout */
+.settings-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+}
+
+/* Settings Tabs */
+.settings-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    background: white;
+    color: var(--text-secondary, #64748b);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.settings-tab:hover {
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-primary, #1e293b);
+}
+
+.settings-tab.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Settings Card */
+.settings-card {
+    padding: 24px;
+}
+
+.settings-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin: 0 0 8px 0;
+}
+
+.settings-description {
+    font-size: 14px;
+    color: var(--text-secondary, #64748b);
+    margin: 0 0 24px 0;
+}
+
+/* Form Styles */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #1e293b);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    background: var(--bg-secondary, #f8fafc);
+    font-size: 14px;
+    color: var(--text-primary, #1e293b);
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Save Button */
+.save-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.save-btn.saved {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Working Hours */
+.working-hours-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.working-hours-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 12px;
+}
+
+.day-toggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.day-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary, #1e293b);
+    min-width: 100px;
+}
+
+.day-name.closed {
+    color: var(--text-secondary, #64748b);
+}
+
+.hours-inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hours-inputs input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    background: white;
+    font-size: 14px;
+    color: var(--text-primary, #1e293b);
+}
+
+.hours-separator {
+    color: var(--text-secondary, #64748b);
+}
+
+.closed-label {
+    font-size: 14px;
+    color: var(--text-secondary, #64748b);
+    font-style: italic;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* Notification Settings */
+.notification-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.notification-group h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin: 0 0 16px 0;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.notification-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notification-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary, #1e293b);
+}
+
+.notification-desc {
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+}
+
+.reminder-timing {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    margin-left: 20px;
+}
+
+.reminder-timing label {
+    font-size: 14px;
+    color: var(--text-secondary, #64748b);
+}
+
+.reminder-timing select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    background: white;
+    font-size: 14px;
+    color: var(--text-primary, #1e293b);
+}
+
+/* Appearance Settings */
+.appearance-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.theme-selector h4,
+.color-selector h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin: 0 0 16px 0;
+}
+
+.theme-options {
+    display: flex;
+    gap: 16px;
+}
+
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 2px solid var(--border-color, #e5e7eb);
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-option:hover {
+    border-color: var(--primary-color, #3b82f6);
+}
+
+.theme-option.active {
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.theme-preview {
+    width: 80px;
+    height: 60px;
+    border-radius: 8px;
+}
+
+.theme-preview.light {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e5e7eb;
+}
+
+.theme-preview.dark {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+.theme-preview.auto {
+    background: linear-gradient(135deg, #ffffff 50%, #1e293b 50%);
+    border: 1px solid #e5e7eb;
+}
+
+.theme-option span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #1e293b);
+}
+
+/* Color Options */
+.color-options {
+    display: flex;
+    gap: 12px;
+}
+
+.color-option {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+}
+
+.color-option.active {
+    border-color: var(--text-primary, #1e293b);
+    transform: scale(1.1);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-tabs {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .settings-tab {
+        flex: 1;
+        min-width: 150px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .working-hours-item {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .hours-inputs {
+        width: 100%;
+    }
+
+    .theme-options {
+        flex-wrap: wrap;
+    }
+
+    .notification-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}

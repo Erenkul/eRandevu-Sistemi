@@ -1,0 +1,115 @@
+.service-selection {
+    max-width: 800px;
+}
+
+.service-selection-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.service-selection-subtitle {
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    margin-bottom: 32px;
+}
+
+.service-category {
+    margin-bottom: 32px;
+}
+
+.service-category-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+}
+
+.service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.service-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-outline);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.service-card:hover {
+    border-color: var(--color-outline-variant);
+    box-shadow: var(--shadow-sm);
+}
+
+.service-card.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-container);
+}
+
+.service-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-surface-variant);
+    color: var(--color-text-secondary);
+}
+
+.service-card.selected .service-icon {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.service-info {
+    flex: 1;
+}
+
+.service-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.service-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.service-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.service-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-outline);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.service-card.selected .service-checkbox {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
