@@ -69,8 +69,8 @@
 
 /* Hero Section */
 .home-hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    padding: 4rem 4rem 6rem;
+    background: #0F172A;
+    padding: 5rem 4rem 6rem;
     position: relative;
     overflow: hidden;
 }
@@ -78,23 +78,19 @@
 .home-hero::before {
     content: '';
     position: absolute;
-    width: 500px;
-    height: 500px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    top: -200px;
-    right: -100px;
+    inset: 0;
+    background-image:
+        radial-gradient(ellipse 80% 60% at 60% -10%, rgba(56, 189, 248, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at -10% 80%, rgba(30, 58, 138, 0.3) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 .home-hero::after {
     content: '';
     position: absolute;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-    bottom: -100px;
-    left: -50px;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
 }
 
 .home-hero .hero-content {
@@ -111,10 +107,11 @@
     line-height: 1.2;
     margin-bottom: 1.5rem;
     color: #fff;
+    letter-spacing: -0.02em;
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -176,25 +173,43 @@
 
 .hero-stats {
     display: flex;
-    gap: 3rem;
+    gap: 1px;
     justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 .stat {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    align-items: center;
+}
+
+.stat+.stat {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat strong {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #fff;
+    letter-spacing: -0.02em;
 }
 
 .stat span {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
 }
 
 .hero-visual {
@@ -242,7 +257,7 @@
 }
 
 .category-item.active {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    background: var(--color-primary);
     border-color: transparent;
     color: #fff;
     box-shadow: var(--shadow-md);
@@ -310,12 +325,24 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, var(--color-primary-container), var(--color-secondary-container));
+    padding: 1.25rem 1.5rem;
+    background: var(--color-surface-variant);
+    border-bottom: 1px solid var(--color-outline);
 }
 
 .business-avatar {
-    font-size: 3rem;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
 }
 
 .business-status {
@@ -350,11 +377,13 @@
 }
 
 .business-category {
-    font-size: 0.85rem;
-    color: var(--color-primary);
+    font-size: 0.8rem;
+    color: var(--color-text-tertiary);
     display: block;
     margin-bottom: 0.75rem;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .business-rating {
@@ -465,8 +494,15 @@
 }
 
 .step-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-xl);
+    background: var(--color-primary-container);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
 }
 
 .step-card h3 {
@@ -484,7 +520,8 @@
 
 /* CTA */
 .home-cta {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: var(--color-surface-variant);
+    border-top: 1px solid var(--color-outline);
     padding: 4rem;
     text-align: center;
     position: relative;
@@ -494,29 +531,30 @@
 .home-cta::before {
     content: '';
     position: absolute;
-    width: 400px;
-    height: 400px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    top: -150px;
-    left: -100px;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
 }
 
 .cta-content {
     position: relative;
     z-index: 1;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .cta-content h2 {
     font-size: 1.75rem;
     font-weight: 700;
     margin-bottom: 0.75rem;
-    color: #fff;
+    color: var(--color-text-primary);
 }
 
 .cta-content p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    font-size: 1.05rem;
     margin-bottom: 2rem;
 }
 
@@ -530,7 +568,7 @@
 .home-footer {
     background: var(--color-surface);
     border-top: 1px solid var(--color-outline);
-    padding: 4rem 4rem 1.5rem;
+    padding: 2.5rem 4rem 1.5rem;
 }
 
 .footer-content {
@@ -538,8 +576,9 @@
     justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
-    padding-bottom: 3rem;
+    padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--color-outline);
+    align-items: flex-start;
 }
 
 .footer-brand p {
@@ -628,8 +667,15 @@
 }
 
 .no-results-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    width: 64px;
+    height: 64px;
+    background: var(--color-surface-variant);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: var(--color-text-tertiary);
 }
 
 .no-results h3 {

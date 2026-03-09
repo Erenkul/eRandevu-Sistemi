@@ -13,91 +13,15 @@ import {
     Stethoscope,
     Building2,
     LogIn,
-    X
+    X,
+    CalendarCheck,
+    CheckCircle2
 } from 'lucide-react';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
 import './HomePage.css';
 
-interface Business {
-    id: string;
-    name: string;
-    category: string;
-    rating: number;
-    reviewCount: number;
-    location: string;
-    image: string;
-    services: string[];
-    openNow: boolean;
-}
-
-const mockBusinesses: Business[] = [
-    {
-        id: 'elite-barber',
-        name: 'Elite Barber Shop',
-        category: 'Berber',
-        rating: 4.9,
-        reviewCount: 128,
-        location: 'Kadıköy, İstanbul',
-        image: '💈',
-        services: ['Saç Kesimi', 'Sakal', 'Cilt Bakımı'],
-        openNow: true,
-    },
-    {
-        id: 'modern-kuafor',
-        name: 'Modern Kuaför',
-        category: 'Kuaför',
-        rating: 4.7,
-        reviewCount: 256,
-        location: 'Beşiktaş, İstanbul',
-        image: '💇',
-        services: ['Saç Kesimi', 'Boyama', 'Fön'],
-        openNow: true,
-    },
-    {
-        id: 'style-studio',
-        name: 'Style Studio',
-        category: 'Güzellik Salonu',
-        rating: 4.8,
-        reviewCount: 189,
-        location: 'Şişli, İstanbul',
-        image: '✨',
-        services: ['Makyaj', 'Cilt Bakımı', 'Manikür'],
-        openNow: false,
-    },
-    {
-        id: 'fit-gym',
-        name: 'FitLife Gym',
-        category: 'Spor Salonu',
-        rating: 4.6,
-        reviewCount: 342,
-        location: 'Ataşehir, İstanbul',
-        image: '🏋️',
-        services: ['Personal Training', 'Grup Dersleri', 'Pilates'],
-        openNow: true,
-    },
-    {
-        id: 'dental-smile',
-        name: 'Dental Smile Kliniği',
-        category: 'Diş Kliniği',
-        rating: 4.9,
-        reviewCount: 167,
-        location: 'Levent, İstanbul',
-        image: '🦷',
-        services: ['Diş Temizliği', 'Dolgu', 'İmplant'],
-        openNow: true,
-    },
-    {
-        id: 'zen-spa',
-        name: 'Zen Spa & Wellness',
-        category: 'Spa',
-        rating: 4.8,
-        reviewCount: 98,
-        location: 'Bebek, İstanbul',
-        image: '🧘',
-        services: ['Masaj', 'Sauna', 'Yüz Bakımı'],
-        openNow: true,
-    },
-];
+import { useBusinesses } from '../hooks';
+import type { Business } from '../types';
 
 const categories = [
     { id: 'all', name: 'Tümü', icon: Search },
@@ -143,33 +67,48 @@ export const HomePage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [activeNav, setActiveNav] = useState<ActiveNav>('home');
     const [activeModal, setActiveModal] = useState<ModalType>(null);
+    const { data: businesses, loading: businessesLoading } = useBusinesses();
 
     // Refs for scroll
     const businessesRef = useRef<HTMLDivElement>(null);
     const howItWorksRef = useRef<HTMLDivElement>(null);
     const heroRef = useRef<HTMLDivElement>(null);
 
-    const filteredBusinesses = mockBusinesses.filter(business => {
+    // isOpenHelper
+    const checkIsOpen = (business: Business) => {
+        if (!business.workingHours) return true; // fallback
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayOfWeek = dayNames[new Date().getDay()] as keyof typeof business.workingHours;
+        const todayHours = business.workingHours[dayOfWeek];
+        if (!todayHours || !todayHours.isOpen) return false;
+
+        const now = new Date();
+        const currentMins = now.getHours() * 60 + now.getMinutes();
+
+        const [openH, openM] = todayHours.openTime.split(':').map(Number);
+        const [closeH, closeM] = todayHours.closeTime.split(':').map(Number);
+        const openMins = openH * 60 + openM;
+        const closeMins = closeH * 60 + closeM;
+
+        return currentMins >= openMins && currentMins <= closeMins;
+    };
+
+    const filteredBusinesses = businesses.filter(business => {
+        // Fallback or generic category mapping if category doesn't strictly exist on Type business
+        // Real logic: Business type doesn't have a strict category string, but we can search description/name
+
         const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            business.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            business.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            business.services.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+            business.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            business.address.toLowerCase().includes(searchQuery.toLowerCase());
 
         if (selectedCategory === 'all') return matchesSearch;
 
-        const categoryMap: Record<string, string[]> = {
-            'barber': ['Berber'],
-            'beauty': ['Kuaför', 'Güzellik Salonu'],
-            'gym': ['Spor Salonu'],
-            'health': ['Diş Kliniği'],
-            'spa': ['Spa'],
-        };
-
-        return matchesSearch && categoryMap[selectedCategory]?.includes(business.category);
+        // Simplified category filter (since we don't have explicit categories in DB yet, filtering mostly by name/desc)
+        return matchesSearch && business.name.toLowerCase().includes(selectedCategory);
     });
 
-    const handleBooking = (businessId: string) => {
-        navigate(`/book/${businessId}`);
+    const handleBooking = (slug: string) => {
+        navigate(`/book/${slug}`);
     };
 
     const handleLogin = () => {
@@ -349,9 +288,6 @@ export const HomePage: React.FC = () => {
                     <SecondaryButton icon={LogIn} onClick={handleLogin}>
                         Giriş Yap
                     </SecondaryButton>
-                    <PrimaryButton icon={Building2} onClick={handleLogin}>
-                        İşletme Girişi
-                    </PrimaryButton>
                 </div>
             </header>
 
@@ -439,50 +375,52 @@ export const HomePage: React.FC = () => {
                     )}
                 </div>
 
-                {filteredBusinesses.length > 0 ? (
+                {businessesLoading ? (
+                    <div className="empty-state-inline"><p>İşletmeler yükleniyor...</p></div>
+                ) : filteredBusinesses.length > 0 ? (
                     <div className="business-grid">
-                        {filteredBusinesses.map((business) => (
-                            <div key={business.id} className="business-card">
-                                <div className="business-card-header">
-                                    <div className="business-avatar">{business.image}</div>
-                                    <div className={`business-status ${business.openNow ? 'open' : 'closed'}`}>
-                                        <Clock size={12} />
-                                        {business.openNow ? 'Açık' : 'Kapalı'}
+                        {filteredBusinesses.map((business) => {
+                            const isOpen = checkIsOpen(business);
+                            return (
+                                <div key={business.id} className="business-card">
+                                    <div className="business-card-header">
+                                        <div className="business-avatar">
+                                            {business.name.charAt(0)}
+                                        </div>
+                                        <div className={`business-status ${isOpen ? 'open' : 'closed'}`}>
+                                            <Clock size={12} />
+                                            {isOpen ? 'Açık' : 'Kapalı'}
+                                        </div>
+                                    </div>
+                                    <div className="business-card-body">
+                                        <h3>{business.name}</h3>
+                                        <span className="business-category">İşletme</span>
+                                        <div className="business-rating">
+                                            <Star size={14} fill="currentColor" />
+                                            <span>4.9</span>
+                                            <span className="review-count">(Yeni)</span>
+                                        </div>
+                                        <div className="business-location">
+                                            <MapPin size={14} />
+                                            {business.city}
+                                        </div>
+                                    </div>
+                                    <div className="business-card-footer">
+                                        <PrimaryButton
+                                            icon={ArrowRight}
+                                            iconPosition="right"
+                                            onClick={() => handleBooking(business.slug)}
+                                        >
+                                            Randevu Al
+                                        </PrimaryButton>
                                     </div>
                                 </div>
-                                <div className="business-card-body">
-                                    <h3>{business.name}</h3>
-                                    <span className="business-category">{business.category}</span>
-                                    <div className="business-rating">
-                                        <Star size={14} fill="currentColor" />
-                                        <span>{business.rating}</span>
-                                        <span className="review-count">({business.reviewCount} değerlendirme)</span>
-                                    </div>
-                                    <div className="business-location">
-                                        <MapPin size={14} />
-                                        {business.location}
-                                    </div>
-                                    <div className="business-services">
-                                        {business.services.slice(0, 3).map((service, idx) => (
-                                            <span key={idx} className="service-tag">{service}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="business-card-footer">
-                                    <PrimaryButton
-                                        icon={ArrowRight}
-                                        iconPosition="right"
-                                        onClick={() => handleBooking(business.id)}
-                                    >
-                                        Randevu Al
-                                    </PrimaryButton>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="no-results">
-                        <div className="no-results-icon">🔍</div>
+                        <div className="no-results-icon"><Search size={28} /></div>
                         <h3>Sonuç bulunamadı</h3>
                         <p>"{searchQuery}" ile eşleşen işletme bulunamadı. Farklı bir arama deneyin.</p>
                         <SecondaryButton onClick={clearSearch}>Aramayı Temizle</SecondaryButton>
@@ -498,19 +436,19 @@ export const HomePage: React.FC = () => {
                 <div className="steps-grid">
                     <div className="step-card" onClick={() => scrollToSection('businesses')}>
                         <div className="step-number">1</div>
-                        <div className="step-icon">🔍</div>
+                        <div className="step-icon"><Search size={26} /></div>
                         <h3>İşletme Seçin</h3>
                         <p>İstediğiniz hizmeti veren işletmeyi bulun ve seçin</p>
                     </div>
                     <div className="step-card">
                         <div className="step-number">2</div>
-                        <div className="step-icon">📅</div>
+                        <div className="step-icon"><CalendarCheck size={26} /></div>
                         <h3>Tarih & Saat Seçin</h3>
                         <p>Size uygun tarih ve saati belirleyin</p>
                     </div>
                     <div className="step-card">
                         <div className="step-number">3</div>
-                        <div className="step-icon">✅</div>
+                        <div className="step-icon"><CheckCircle2 size={26} /></div>
                         <h3>Onaylayın</h3>
                         <p>Bilgilerinizi girin ve randevunuzu onaylayın</p>
                     </div>

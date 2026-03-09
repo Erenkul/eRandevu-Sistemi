@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Users } from 'lucide-react';
+
 import './StaffSelection.css';
 import type { Staff } from '../../types';
 

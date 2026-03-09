@@ -21,7 +21,7 @@ interface PopularServicesProps {
     businessId?: string;
 }
 
-export const PopularServices: React.FC<PopularServicesProps> = ({ businessId }) => {
+export const PopularServices: React.FC<PopularServicesProps> = () => {
     const maxCount = Math.max(...mockServices.map((s) => s.count));
 
     const getRankClass = (index: number) => {

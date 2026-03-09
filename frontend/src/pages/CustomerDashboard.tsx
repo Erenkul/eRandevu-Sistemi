@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Calendar,
@@ -20,20 +20,12 @@ import {
 } from 'lucide-react';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
 import './CustomerDashboard.css';
+import { useAuth } from '../contexts';
+import { useCustomerAppointments } from '../hooks';
+import { updateAppointmentStatus } from '../services/firestore';
+import type { Appointment } from '../types';
 
 type TabType = 'home' | 'appointments' | 'favorites' | 'profile';
-
-interface Appointment {
-    id: string;
-    businessName: string;
-    businessInitials: string;
-    service: string;
-    date: Date;
-    time: string;
-    location: string;
-    status: 'upcoming' | 'completed' | 'cancelled';
-    businessId: string;
-}
 
 interface Favorite {
     id: string;
@@ -43,55 +35,30 @@ interface Favorite {
     businessId: string;
 }
 
-const initialAppointments: Appointment[] = [
-    {
-        id: '1',
-        businessName: 'Elite Barber Shop',
-        businessInitials: 'EB',
-        service: 'Saç Kesimi + Sakal',
-        date: new Date(2026, 0, 26),
-        time: '14:00',
-        location: 'Kadıköy, İstanbul',
-        status: 'upcoming',
-        businessId: 'elite-barber',
-    },
-    {
-        id: '2',
-        businessName: 'Modern Kuaför',
-        businessInitials: 'MK',
-        service: 'Saç Boyama',
-        date: new Date(2026, 0, 20),
-        time: '11:00',
-        location: 'Beşiktaş, İstanbul',
-        status: 'completed',
-        businessId: 'modern-kuafor',
-    },
-    {
-        id: '3',
-        businessName: 'Style Studio',
-        businessInitials: 'SS',
-        service: 'Cilt Bakımı',
-        date: new Date(2026, 0, 15),
-        time: '16:30',
-        location: 'Şişli, İstanbul',
-        status: 'completed',
-        businessId: 'style-studio',
-    },
-];
-
-const initialFavorites: Favorite[] = [
-    { id: '1', name: 'Elite Barber Shop', category: 'Berber', initials: 'EB', businessId: 'elite-barber' },
-    { id: '2', name: 'Modern Kuaför', category: 'Kuaför', initials: 'MK', businessId: 'modern-kuafor' },
-    { id: '3', name: 'Style Studio', category: 'Güzellik', initials: 'SS', businessId: 'style-studio' },
-];
-
 const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
     upcoming: 'Yaklaşan',
+    pending: 'Bekliyor',
+    confirmed: 'Onaylandı',
+    inProgress: 'Devam Ediyor',
     completed: 'Tamamlandı',
     cancelled: 'İptal Edildi',
+    noShow: 'Gelmedi',
 };
+
+const getStatusGroup = (status: string): 'upcoming' | 'completed' | 'cancelled' | 'past' => {
+    if (status === 'pending' || status === 'confirmed' || status === 'inProgress') return 'upcoming';
+    if (status === 'completed') return 'completed';
+    if (status === 'cancelled' || status === 'noShow') return 'cancelled';
+    return 'past';
+};
+
+// Helper: get initials from a name
+function getInitials(name?: string): string {
+    if (!name) return '?';
+    return name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
 
 // Modal Component
 interface ModalProps {
@@ -120,31 +87,37 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
 export const CustomerDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    // Fetch real appointments using the user's phone number
+    const { data: rawAppointments, loading: appointmentsLoading, refetch } = useCustomerAppointments(user?.phoneNumber);
+
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('home');
-    const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-    const [favorites, setFavorites] = useState<Favorite[]>(initialFavorites);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
 
-    const upcomingAppointments = appointments.filter((a) => a.status === 'upcoming');
-    const pastAppointments = appointments.filter((a) => a.status !== 'upcoming');
+    // Derived lists
+    const upcomingAppointments = useMemo(() =>
+        rawAppointments.filter(a => getStatusGroup(a.status) === 'upcoming'),
+        [rawAppointments]
+    );
+    const pastAppointments = useMemo(() =>
+        rawAppointments.filter(a => getStatusGroup(a.status) !== 'upcoming'),
+        [rawAppointments]
+    );
 
-    const handleNewAppointment = () => {
-        navigate('/');
-    };
+    const handleNewAppointment = () => navigate('/');
+    const handleBookAgain = (businessId: string) => navigate(`/book/${businessId}`);
 
-    const handleBookAgain = (businessId: string) => {
-        navigate(`/book/${businessId}`);
-    };
-
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await logout();
         navigate('/login');
     };
 
-    const handleGoHome = () => {
-        navigate('/');
-    };
+    const handleGoHome = () => navigate('/');
 
     const handleViewDetails = (appointment: Appointment) => {
         setSelectedAppointment(appointment);
@@ -156,15 +129,18 @@ export const CustomerDashboard: React.FC = () => {
         setShowCancelModal(true);
     };
 
-    const handleConfirmCancel = () => {
-        if (selectedAppointment) {
-            setAppointments(appointments.map(a =>
-                a.id === selectedAppointment.id
-                    ? { ...a, status: 'cancelled' as const }
-                    : a
-            ));
+    const handleConfirmCancel = async () => {
+        if (!selectedAppointment) return;
+        try {
+            setIsCancelling(true);
+            await updateAppointmentStatus(selectedAppointment.id, 'cancelled', 'Müşteri tarafından iptal edildi.');
             setShowCancelModal(false);
             setSelectedAppointment(null);
+            refetch();
+        } catch (err) {
+            console.error('İptal hatası:', err);
+        } finally {
+            setIsCancelling(false);
         }
     };
 
@@ -172,11 +148,67 @@ export const CustomerDashboard: React.FC = () => {
         setFavorites(favorites.filter(f => f.id !== favoriteId));
     };
 
-    // Format full date
-    const formatFullDate = (date: Date) => {
+    // Format appointment date for display
+    const formatAppointmentDate = (appointment: Appointment) => {
+        const date = appointment.dateTime.toDate();
+        return { day: date.getDate(), month: MONTHS[date.getMonth()] };
+    };
+
+    const formatAppointmentTime = (appointment: Appointment) => {
+        const date = appointment.dateTime.toDate();
+        return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const formatFullDate = (appointment: Appointment) => {
+        const date = appointment.dateTime.toDate();
         const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
         const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
         return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}, ${days[date.getDay()]}`;
+    };
+
+    const userInitials = getInitials(user?.displayName);
+
+    const renderAppointmentCard = (appointment: Appointment, showCancel = false) => {
+        const { day, month } = formatAppointmentDate(appointment);
+        const time = formatAppointmentTime(appointment);
+        const serviceNames = appointment.services.map(s => s.serviceName).join(', ');
+        const isUpcoming = getStatusGroup(appointment.status) === 'upcoming';
+
+        return (
+            <div key={appointment.id} className="appointment-card">
+                <div className="appointment-date">
+                    <div className="appointment-date-day">{day}</div>
+                    <div className="appointment-date-month">{month}</div>
+                </div>
+                <div className="appointment-info">
+                    <div className="appointment-business">{appointment.staffName}</div>
+                    <div className="appointment-service">{serviceNames}</div>
+                    <div className="appointment-meta">
+                        <span>
+                            <Clock size={14} />
+                            {time}
+                        </span>
+                        <span>
+                            <MapPin size={14} />
+                            {appointment.businessId}
+                        </span>
+                    </div>
+                </div>
+                <span className={`appointment-status ${appointment.status}`}>
+                    {statusLabels[appointment.status] || appointment.status}
+                </span>
+                <div className="appointment-actions">
+                    {showCancel && isUpcoming && (
+                        <SecondaryButton size="small" onClick={() => handleCancelClick(appointment)}>
+                            İptal Et
+                        </SecondaryButton>
+                    )}
+                    <PrimaryButton size="small" onClick={() => handleViewDetails(appointment)}>
+                        Detaylar
+                    </PrimaryButton>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -224,7 +256,7 @@ export const CustomerDashboard: React.FC = () => {
                     <button className="customer-nav-item" onClick={handleLogout} title="Çıkış Yap">
                         <LogOut size={18} />
                     </button>
-                    <div className="customer-user-avatar">MA</div>
+                    <div className="customer-user-avatar">{userInitials}</div>
                 </div>
             </header>
 
@@ -234,7 +266,7 @@ export const CustomerDashboard: React.FC = () => {
                     <>
                         {/* Welcome */}
                         <div className="customer-welcome">
-                            <h1>Merhaba, Mehmet Ali! 👋</h1>
+                            <h1>Merhaba, {user?.displayName?.split(' ')[0] || 'Hoş geldiniz'}! 👋</h1>
                             <p>Bugün randevu almak ister misiniz?</p>
                         </div>
 
@@ -256,7 +288,11 @@ export const CustomerDashboard: React.FC = () => {
                                 </div>
                                 <div className="quick-action-content">
                                     <h3>Randevularım</h3>
-                                    <p>{upcomingAppointments.length} yaklaşan randevunuz var</p>
+                                    <p>
+                                        {appointmentsLoading
+                                            ? 'Yükleniyor...'
+                                            : `${upcomingAppointments.length} yaklaşan randevunuz var`}
+                                    </p>
                                 </div>
                             </div>
 
@@ -280,39 +316,10 @@ export const CustomerDashboard: React.FC = () => {
                                 </button>
                             </div>
 
-                            {upcomingAppointments.length > 0 ? (
-                                upcomingAppointments.map((appointment) => (
-                                    <div key={appointment.id} className="appointment-card">
-                                        <div className="appointment-date">
-                                            <div className="appointment-date-day">{appointment.date.getDate()}</div>
-                                            <div className="appointment-date-month">
-                                                {MONTHS[appointment.date.getMonth()]}
-                                            </div>
-                                        </div>
-                                        <div className="appointment-info">
-                                            <div className="appointment-business">{appointment.businessName}</div>
-                                            <div className="appointment-service">{appointment.service}</div>
-                                            <div className="appointment-meta">
-                                                <span>
-                                                    <Clock size={14} />
-                                                    {appointment.time}
-                                                </span>
-                                                <span>
-                                                    <MapPin size={14} />
-                                                    {appointment.location}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span className={`appointment-status ${appointment.status}`}>
-                                            {statusLabels[appointment.status]}
-                                        </span>
-                                        <div className="appointment-actions">
-                                            <SecondaryButton size="small" onClick={() => handleViewDetails(appointment)}>
-                                                Detaylar
-                                            </SecondaryButton>
-                                        </div>
-                                    </div>
-                                ))
+                            {appointmentsLoading ? (
+                                <div className="empty-state-inline"><p>Yükleniyor...</p></div>
+                            ) : upcomingAppointments.length > 0 ? (
+                                upcomingAppointments.slice(0, 3).map(a => renderAppointmentCard(a, false))
                             ) : (
                                 <div className="empty-state">
                                     <div className="empty-state-icon">
@@ -370,42 +377,10 @@ export const CustomerDashboard: React.FC = () => {
                             <div className="section-header">
                                 <h2 className="section-title">Yaklaşan</h2>
                             </div>
-                            {upcomingAppointments.length > 0 ? (
-                                upcomingAppointments.map((appointment) => (
-                                    <div key={appointment.id} className="appointment-card">
-                                        <div className="appointment-date">
-                                            <div className="appointment-date-day">{appointment.date.getDate()}</div>
-                                            <div className="appointment-date-month">
-                                                {MONTHS[appointment.date.getMonth()]}
-                                            </div>
-                                        </div>
-                                        <div className="appointment-info">
-                                            <div className="appointment-business">{appointment.businessName}</div>
-                                            <div className="appointment-service">{appointment.service}</div>
-                                            <div className="appointment-meta">
-                                                <span>
-                                                    <Clock size={14} />
-                                                    {appointment.time}
-                                                </span>
-                                                <span>
-                                                    <MapPin size={14} />
-                                                    {appointment.location}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span className={`appointment-status ${appointment.status}`}>
-                                            {statusLabels[appointment.status]}
-                                        </span>
-                                        <div className="appointment-actions">
-                                            <SecondaryButton size="small" onClick={() => handleCancelClick(appointment)}>
-                                                İptal Et
-                                            </SecondaryButton>
-                                            <PrimaryButton size="small" onClick={() => handleViewDetails(appointment)}>
-                                                Detaylar
-                                            </PrimaryButton>
-                                        </div>
-                                    </div>
-                                ))
+                            {appointmentsLoading ? (
+                                <div className="empty-state-inline"><p>Yükleniyor...</p></div>
+                            ) : upcomingAppointments.length > 0 ? (
+                                upcomingAppointments.map(a => renderAppointmentCard(a, true))
                             ) : (
                                 <div className="empty-state-inline">
                                     <p>Yaklaşan randevunuz bulunmuyor</p>
@@ -417,38 +392,40 @@ export const CustomerDashboard: React.FC = () => {
                             <div className="section-header">
                                 <h2 className="section-title">Geçmiş</h2>
                             </div>
-                            {pastAppointments.map((appointment) => (
-                                <div key={appointment.id} className="appointment-card">
-                                    <div className="appointment-date">
-                                        <div className="appointment-date-day">{appointment.date.getDate()}</div>
-                                        <div className="appointment-date-month">
-                                            {MONTHS[appointment.date.getMonth()]}
-                                        </div>
-                                    </div>
-                                    <div className="appointment-info">
-                                        <div className="appointment-business">{appointment.businessName}</div>
-                                        <div className="appointment-service">{appointment.service}</div>
-                                        <div className="appointment-meta">
-                                            <span>
-                                                <Clock size={14} />
-                                                {appointment.time}
+                            {pastAppointments.length > 0 ? (
+                                pastAppointments.map((appointment) => {
+                                    const { day, month } = formatAppointmentDate(appointment);
+                                    const time = formatAppointmentTime(appointment);
+                                    const serviceNames = appointment.services.map(s => s.serviceName).join(', ');
+                                    return (
+                                        <div key={appointment.id} className="appointment-card">
+                                            <div className="appointment-date">
+                                                <div className="appointment-date-day">{day}</div>
+                                                <div className="appointment-date-month">{month}</div>
+                                            </div>
+                                            <div className="appointment-info">
+                                                <div className="appointment-business">{appointment.staffName}</div>
+                                                <div className="appointment-service">{serviceNames}</div>
+                                                <div className="appointment-meta">
+                                                    <span><Clock size={14} />{time}</span>
+                                                </div>
+                                            </div>
+                                            <span className={`appointment-status ${appointment.status}`}>
+                                                {statusLabels[appointment.status] || appointment.status}
                                             </span>
-                                            <span>
-                                                <MapPin size={14} />
-                                                {appointment.location}
-                                            </span>
+                                            <div className="appointment-actions">
+                                                <PrimaryButton size="small" onClick={() => handleBookAgain(appointment.businessId)}>
+                                                    Tekrar Randevu Al
+                                                </PrimaryButton>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <span className={`appointment-status ${appointment.status}`}>
-                                        {statusLabels[appointment.status]}
-                                    </span>
-                                    <div className="appointment-actions">
-                                        <PrimaryButton size="small" onClick={() => handleBookAgain(appointment.businessId)}>
-                                            Tekrar Randevu Al
-                                        </PrimaryButton>
-                                    </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="empty-state-inline">
+                                    <p>Geçmiş randevunuz bulunmuyor</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </>
                 )}
@@ -506,9 +483,9 @@ export const CustomerDashboard: React.FC = () => {
 
                         <div className="profile-card">
                             <div className="profile-header">
-                                <div className="profile-avatar">MA</div>
+                                <div className="profile-avatar">{userInitials}</div>
                                 <div className="profile-info">
-                                    <h2>Mehmet Ali Işık</h2>
+                                    <h2>{user?.displayName || 'İsimsiz Kullanıcı'}</h2>
                                     <span>Müşteri Hesabı</span>
                                 </div>
                                 <SecondaryButton icon={Edit2} size="small">
@@ -517,25 +494,29 @@ export const CustomerDashboard: React.FC = () => {
                             </div>
 
                             <div className="profile-details">
-                                <div className="profile-detail-item">
-                                    <Phone size={18} />
-                                    <div>
-                                        <span className="detail-label">Telefon</span>
-                                        <span className="detail-value">0532 123 45 67</span>
+                                {user?.phoneNumber && (
+                                    <div className="profile-detail-item">
+                                        <Phone size={18} />
+                                        <div>
+                                            <span className="detail-label">Telefon</span>
+                                            <span className="detail-value">{user.phoneNumber}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="profile-detail-item">
-                                    <Mail size={18} />
-                                    <div>
-                                        <span className="detail-label">E-posta</span>
-                                        <span className="detail-value">mehmet@email.com</span>
+                                )}
+                                {user?.email && (
+                                    <div className="profile-detail-item">
+                                        <Mail size={18} />
+                                        <div>
+                                            <span className="detail-label">E-posta</span>
+                                            <span className="detail-value">{user.email}</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             <div className="profile-stats">
                                 <div className="profile-stat">
-                                    <strong>{appointments.length}</strong>
+                                    <strong>{rawAppointments.length}</strong>
                                     <span>Toplam Randevu</span>
                                 </div>
                                 <div className="profile-stat">
@@ -567,33 +548,33 @@ export const CustomerDashboard: React.FC = () => {
                 {selectedAppointment && (
                     <div className="appointment-detail">
                         <div className="detail-row">
-                            <span className="detail-label">İşletme</span>
-                            <span className="detail-value">{selectedAppointment.businessName}</span>
+                            <span className="detail-label">Personel</span>
+                            <span className="detail-value">{selectedAppointment.staffName}</span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Hizmet</span>
-                            <span className="detail-value">{selectedAppointment.service}</span>
+                            <span className="detail-value">{selectedAppointment.services.map(s => s.serviceName).join(', ')}</span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Tarih</span>
-                            <span className="detail-value">{formatFullDate(selectedAppointment.date)}</span>
+                            <span className="detail-value">{formatFullDate(selectedAppointment)}</span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Saat</span>
-                            <span className="detail-value">{selectedAppointment.time}</span>
+                            <span className="detail-value">{formatAppointmentTime(selectedAppointment)}</span>
                         </div>
                         <div className="detail-row">
-                            <span className="detail-label">Konum</span>
-                            <span className="detail-value">{selectedAppointment.location}</span>
+                            <span className="detail-label">Toplam</span>
+                            <span className="detail-value">₺{selectedAppointment.totalPrice}</span>
                         </div>
                         <div className="detail-row">
                             <span className="detail-label">Durum</span>
                             <span className={`appointment-status-badge ${selectedAppointment.status}`}>
-                                {statusLabels[selectedAppointment.status]}
+                                {statusLabels[selectedAppointment.status] || selectedAppointment.status}
                             </span>
                         </div>
 
-                        {selectedAppointment.status === 'upcoming' && (
+                        {getStatusGroup(selectedAppointment.status) === 'upcoming' && (
                             <div className="modal-actions">
                                 <SecondaryButton onClick={() => { setShowDetailModal(false); handleCancelClick(selectedAppointment); }}>
                                     Randevuyu İptal Et
@@ -601,7 +582,7 @@ export const CustomerDashboard: React.FC = () => {
                             </div>
                         )}
 
-                        {selectedAppointment.status !== 'upcoming' && (
+                        {getStatusGroup(selectedAppointment.status) !== 'upcoming' && (
                             <div className="modal-actions">
                                 <PrimaryButton onClick={() => { setShowDetailModal(false); handleBookAgain(selectedAppointment.businessId); }}>
                                     Tekrar Randevu Al
@@ -615,7 +596,7 @@ export const CustomerDashboard: React.FC = () => {
             {/* Cancel Confirmation Modal */}
             <Modal
                 isOpen={showCancelModal}
-                onClose={() => setShowCancelModal(false)}
+                onClose={() => !isCancelling && setShowCancelModal(false)}
                 title="Randevu İptali"
             >
                 <div className="cancel-confirmation">
@@ -627,18 +608,22 @@ export const CustomerDashboard: React.FC = () => {
 
                     {selectedAppointment && (
                         <div className="cancel-details">
-                            <strong>{selectedAppointment.businessName}</strong>
-                            <span>{selectedAppointment.service}</span>
-                            <span>{formatFullDate(selectedAppointment.date)} - {selectedAppointment.time}</span>
+                            <strong>{selectedAppointment.staffName}</strong>
+                            <span>{selectedAppointment.services.map(s => s.serviceName).join(', ')}</span>
+                            <span>{formatFullDate(selectedAppointment)} - {formatAppointmentTime(selectedAppointment)}</span>
                         </div>
                     )}
 
                     <div className="modal-actions">
-                        <SecondaryButton onClick={() => setShowCancelModal(false)}>
+                        <SecondaryButton onClick={() => setShowCancelModal(false)} disabled={isCancelling}>
                             Vazgeç
                         </SecondaryButton>
-                        <PrimaryButton onClick={handleConfirmCancel} style={{ background: 'var(--color-error)' }}>
-                            Evet, İptal Et
+                        <PrimaryButton
+                            onClick={handleConfirmCancel}
+                            disabled={isCancelling}
+                            style={{ background: 'var(--color-error)' }}
+                        >
+                            {isCancelling ? 'İptal ediliyor...' : 'Evet, İptal Et'}
                         </PrimaryButton>
                     </div>
                 </div>

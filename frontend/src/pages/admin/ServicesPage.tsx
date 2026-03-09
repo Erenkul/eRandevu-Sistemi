@@ -13,7 +13,7 @@ const categories = ['Tümü', 'Saç', 'Sakal', 'Bakım', 'Kombo', 'Diğer'];
 export const ServicesPage: React.FC = () => {
     const { user } = useAuth();
     const businessId = user?.businessId;
-    const { data: services, loading, error, refetch: refresh } = useServices(businessId);
+    const { data: services, loading, refetch: refresh } = useServices(businessId);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Tümü');

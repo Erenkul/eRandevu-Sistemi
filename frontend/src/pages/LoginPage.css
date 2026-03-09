@@ -3,41 +3,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: var(--color-background);
     padding: 24px;
     position: relative;
-    overflow: hidden;
-}
-
-.auth-page::before {
-    content: '';
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    top: -200px;
-    right: -100px;
-}
-
-.auth-page::after {
-    content: '';
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-    bottom: -100px;
-    left: -50px;
 }
 
 .auth-container {
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     background-color: var(--color-surface);
     border-radius: var(--radius-xl);
     padding: 48px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-outline);
     position: relative;
     z-index: 1;
 }
@@ -126,7 +104,7 @@
 }
 
 .role-card.customer .role-card-icon {
-    background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent));
+    background: linear-gradient(135deg, var(--color-secondary-light), var(--color-secondary));
     color: white;
 }
 
@@ -290,8 +268,8 @@
 }
 
 .role-badge.customer {
-    background-color: var(--color-accent-container);
-    color: var(--color-accent);
+    background-color: var(--color-secondary-container);
+    color: var(--color-secondary);
 }
 
 /* Scrollable container for register form */

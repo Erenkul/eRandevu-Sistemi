@@ -61,6 +61,11 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   return null;
 }
 
+export async function getAllBusinesses(): Promise<Business[]> {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.BUSINESSES));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
+}
+
 export async function updateBusiness(businessId: string, data: Partial<Business>): Promise<void> {
   const docRef = doc(db, COLLECTIONS.BUSINESSES, businessId);
   await updateDoc(docRef, {
@@ -258,6 +263,18 @@ export async function updateAppointmentStatus(
   }
 
   await updateDoc(docRef, updateData);
+}
+
+// Fetch all appointments for a specific customer phone number (customer-facing)
+export async function getAppointmentsByPhone(phone: string): Promise<Appointment[]> {
+  const formattedPhone = formatPhoneNumber(phone);
+  const q = query(
+    collection(db, COLLECTIONS.APPOINTMENTS),
+    where('customerPhone', '==', formattedPhone),
+    orderBy('dateTime', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
 }
 
 // Real-time listener for appointments

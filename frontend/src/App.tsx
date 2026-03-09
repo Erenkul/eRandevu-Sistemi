@@ -27,8 +27,8 @@ function App() {
           {/* Auth Pages */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Admin Dashboard (Business) - Protected */}
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          {/* Admin Dashboard (Business) - Protected for admin and staff */}
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'staff']} />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/onboarding" element={<OnboardingWizard />} />
             <Route path="/admin/services" element={<ServicesPage />} />

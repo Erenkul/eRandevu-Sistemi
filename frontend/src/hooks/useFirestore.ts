@@ -11,10 +11,12 @@ import {
   getStaff,
   getAllStaff,
   getAppointments,
+  getAppointmentsByPhone,
   getTodayAppointments,
   getCustomers,
   subscribeToAppointments,
   getAvailableSlots,
+  getAllBusinesses,
 } from '../services/firestore';
 import type { Business, Service, Staff, Appointment, Customer } from '../types';
 
@@ -386,6 +388,66 @@ export function useDashboardStats(businessId: string | undefined): UseDataResult
       setLoading(false);
     }
   }, [businessId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+
+  return { data, loading, error, refetch: fetchData };
+}
+
+// ============ CUSTOMER-FACING APPOINTMENTS HOOK ============
+
+// Fetches all appointments for the currently logged-in customer using their phone number
+export function useCustomerAppointments(phone: string | undefined): UseDataListResult<Appointment> {
+  const [data, setData] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!phone) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const appointments = await getAppointmentsByPhone(phone);
+      setData(appointments);
+    } catch (err: any) {
+      setError(err.message || 'Randevularınız alınamadı.');
+    } finally {
+      setLoading(false);
+    }
+  }, [phone]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
+}
+
+// ============ ALL BUSINESSES HOOK ============
+
+export function useBusinesses(): UseDataListResult<Business> {
+  const [data, setData] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const businesses = await getAllBusinesses();
+      setData(businesses);
+    } catch (err: any) {
+      setError(err.message || 'İşletmeler alınamadı.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchData();

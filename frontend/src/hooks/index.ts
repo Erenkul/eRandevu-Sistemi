@@ -5,4 +5,4 @@ export { useTodayAppointments } from './useTodayAppointments';
 export { useServices } from './useServices';
 export { useStaff } from './useStaff';
 export { useAvailableSlots } from './useAvailableSlots';
-export { useCustomers, useRealtimeAppointments, useAppointments } from './useFirestore';
+export { useCustomers, useRealtimeAppointments, useAppointments, useCustomerAppointments, useBusinesses } from './useFirestore';

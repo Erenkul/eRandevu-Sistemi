@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Plus } from 'lucide-react';
+import { Bell, Plus, X } from 'lucide-react';
 import { AdminSidebar, DashboardStats, TodaySchedule, PopularServices } from '../components/admin';
-import { SearchInput, IconButton, Card } from '../components/ui';
+import { IconButton, Card } from '../components/ui';
 import './AdminDashboard.css';
 
 import { useAuth } from '../contexts';
@@ -11,6 +11,7 @@ import { useBusiness, useDashboardStats, useTodayAppointments } from '../hooks';
 export const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [showNewAppointmentModal, setShowNewAppointmentModal] = useState(false);
 
     const { data: business, loading: businessLoading } = useBusiness(user?.businessId);
     const { data: stats, loading: statsLoading } = useDashboardStats(user?.businessId);
@@ -41,7 +42,7 @@ export const AdminDashboard: React.FC = () => {
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite',
                 }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } } `}</style>
             </div>
         );
     }
@@ -55,10 +56,6 @@ export const AdminDashboard: React.FC = () => {
                     <div className="topbar-title">
                         <h1>{business?.name || 'Panel'}</h1>
                         <p>Hoş geldiniz, işte bugünün özeti.</p>
-                    </div>
-
-                    <div className="topbar-search">
-                        <SearchInput placeholder="Randevu ara..." />
                     </div>
 
                     <IconButton icon={Bell} tooltip="Bildirimler" />
@@ -93,11 +90,35 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <button className="fab-button" onClick={() => navigate('/admin/new-appointment')}>
+                <button className="fab-button" onClick={() => navigate('/admin/schedule')}>
                     <Plus size={20} />
                     YENİ RANDEVU
                 </button>
             </main>
+
+            {/* New Appointment Modal placeholder */}
+            {showNewAppointmentModal && (
+                <div className="modal-overlay" onClick={() => setShowNewAppointmentModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                        <div className="modal-header">
+                            <h2>Yeni Randevu</h2>
+                            <button className="modal-close" onClick={() => setShowNewAppointmentModal(false)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body" style={{ padding: 24 }}>
+                            <p style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>
+                                Randevu eklemek için Takvim sayfasını kullanabilir ya da müşterinin booking linkini paylaşabilirsiniz.
+                            </p>
+                            <button
+                                className="btn-primary"
+                                style={{ width: '100%' }}
+                                onClick={() => { setShowNewAppointmentModal(false); navigate('/admin/schedule'); }}
+                            >
+                                Takvime Git
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

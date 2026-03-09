@@ -16,7 +16,7 @@ import { auth, db, COLLECTIONS } from '../lib/firebase';
 
 // User type defined locally to avoid import issues
 // User type defined locally to avoid import issues
-interface User {
+export interface User {
   uid: string;
   email: string;
   displayName?: string;
@@ -27,14 +27,43 @@ interface User {
   role: 'admin' | 'staff' | 'customer';
 }
 
+export interface RegisterUserData {
+  email: string;
+  displayName: string;
+  role: 'admin' | 'staff' | 'customer';
+  createdAt: any; // FieldValue from firestore
+  updatedAt: any;
+  phoneNumber?: string;
+  businessId?: string;
+  businessName?: string;
+}
+
+export interface BusinessData {
+  name: string;
+  email: string;
+  phone?: string;
+  slug: string; // URL friendly name
+  ownerId: string;
+  isActive: boolean;
+  onboardingCompleted: boolean;
+  createdAt: any;
+  updatedAt: any;
+  settings: {
+    slotDuration: number;
+    currency: string;
+    timezone: string;
+  };
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, expectedPortal?: 'business' | 'customer') => Promise<void>;
   register: (email: string, password: string, displayName: string, phone?: string, role?: 'admin' | 'customer', businessName?: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updateUserProfile: (data: Partial<User>) => Promise<void>;
   clearError: () => void;
 }
 
@@ -91,12 +120,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, expectedPortal?: 'business' | 'customer') => {
     try {
       setError(null);
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      if (expectedPortal) {
+        // Fetch user data early to verify role matches the portal they're logging into
+        const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userCredential.user.uid));
+
+        // Ensure user document exists, defaulting to customer role if not fully onboarded in firestore
+        const userData = userDoc.exists() ? userDoc.data() : null;
+        const actualRole = userData?.role || 'customer';
+
+        if (expectedPortal === 'business' && actualRole === 'customer') {
+          await signOut(auth); // Sign out unauthorized user
+          throw new Error('role-mismatch-business');
+        }
+
+        if (expectedPortal === 'customer' && (actualRole === 'admin' || actualRole === 'staff')) {
+          await signOut(auth); // Sign out unauthorized user
+          throw new Error('role-mismatch-customer');
+        }
+      }
     } catch (err: any) {
-      const errorMessage = getErrorMessage(err.code);
+      // For custom thrown errors, they appear as err.message, for Firebase errors, err.code
+      const errorMessage = getErrorMessage(err.message === 'role-mismatch-business' || err.message === 'role-mismatch-customer' ? err.message : err.code);
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -115,7 +164,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(newUser, { displayName });
 
-      const userData: any = {
+      let assignedBusinessId: string | undefined = undefined;
+
+      // If business registration (admin), create a business document first
+      if (role === 'admin' && businessName) {
+        const newBusinessRef = doc(db, COLLECTIONS.BUSINESSES, newUser.uid); // Using uid as business id for simplicity initially, or auto-generate
+        const businessData: BusinessData = {
+          name: businessName,
+          email: email,
+          phone: phone || '',
+          slug: businessName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          ownerId: newUser.uid,
+          isActive: true, // Auto-active for now
+          onboardingCompleted: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          settings: {
+            slotDuration: 30, // Default 30 mins
+            currency: 'TRY',
+            timezone: 'Europe/Istanbul',
+          }
+        };
+        await setDoc(newBusinessRef, businessData);
+        assignedBusinessId = newBusinessRef.id;
+      }
+
+      const userData: RegisterUserData = {
         email,
         displayName,
         role,
@@ -124,12 +198,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       if (phone) userData.phoneNumber = phone;
-
-      // If business registration (admin), we might want to create a business document too
-      // For now just saving businessName in user doc or similar
       if (businessName) userData.businessName = businessName;
+      if (assignedBusinessId) userData.businessId = assignedBusinessId;
 
       await setDoc(doc(db, COLLECTIONS.USERS, newUser.uid), userData);
+
+      // Update local state early for better UX before re-auth triggers fully
+      setUser(prev => prev ? {
+        ...prev,
+        ...userData,
+        uid: newUser.uid,
+        role: role as 'admin' | 'staff' | 'customer'
+      } : null);
+
     } catch (err: any) {
       const errorMessage = getErrorMessage(err.code);
       setError(errorMessage);
@@ -159,10 +240,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (data: Partial<User>) => {
+    if (!user) throw new Error('Oturum açmış kullanıcı bulunamadı.');
+
+    try {
+      setError(null);
+
+      // Update Auth Profile if displayName or photoURL changed
+      if (data.displayName || data.photoURL) {
+        await updateProfile(auth.currentUser!, {
+          displayName: data.displayName || user.displayName,
+          photoURL: data.photoURL || user.photoURL
+        });
+      }
+
+      // Update Firestore user document
+      const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+      const updateData = {
+        ...data,
+        updatedAt: serverTimestamp()
+      };
+
+      // Remove any fields that shouldn't be updated directly via this method, like uid or role
+      delete (updateData as any).uid;
+      delete (updateData as any).role;
+
+      await setDoc(userRef, updateData, { merge: true });
+
+      // Update local state
+      setUser((prev) => prev ? { ...prev, ...data } : null);
+
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      const errorMessage = err.code ? getErrorMessage(err.code) : 'Profil güncellenirken bir hata oluştu.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout, resetPassword, clearError }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, logout, resetPassword, updateUserProfile, clearError }}>
       {children}
     </AuthContext.Provider>
   );
@@ -179,11 +298,14 @@ export function useAuth() {
 function getErrorMessage(code: string): string {
   const messages: Record<string, string> = {
     'auth/invalid-email': 'Geçersiz e-posta adresi.',
+    'auth/invalid-credential': 'Bu e-posta veya şifre hatalı.',
     'auth/user-not-found': 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.',
     'auth/wrong-password': 'Hatalı şifre.',
     'auth/email-already-in-use': 'Bu e-posta adresi zaten kullanılıyor.',
     'auth/weak-password': 'Şifre en az 6 karakter olmalıdır.',
     'auth/too-many-requests': 'Çok fazla deneme. Lütfen bekleyin.',
+    'role-mismatch-business': 'Bu e-posta adresi bir müşteri hesabına aittir. İşletme girişi yapamazsınız.',
+    'role-mismatch-customer': 'Bu e-posta adresi bir işletme hesabına aittir. Müşteri girişi yapamazsınız.'
   };
   return messages[code] || 'Bir hata oluştu.';
 }
