@@ -265,6 +265,17 @@ export const LoginPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Form gönderilmeye çalışıldığında tüm alanları dokunulmuş (touched) kabul et
+        setTouched({
+            email: true,
+            password: true,
+            confirmPassword: true,
+            name: true,
+            businessName: true,
+            phone: true,
+            terms: true
+        });
+
         if (!validateForm()) {
             return;
         }

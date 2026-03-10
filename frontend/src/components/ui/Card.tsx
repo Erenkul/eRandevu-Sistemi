@@ -23,7 +23,7 @@ export const Card: React.FC<CardProps> = ({
         elevated && 'card-elevated',
         onClick && 'cursor-pointer',
         className,
-    ].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' ').trim();
 
     return (
         <div className={classes} onClick={onClick}>

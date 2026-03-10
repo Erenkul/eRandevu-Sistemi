@@ -35,12 +35,46 @@ const LoadingSpinner = () => (
 );
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    const { user, loading } = useAuth();
+    const { user, loading, error } = useAuth();
     const location = useLocation();
 
     // Firebase auth durumu henüz belli değil — spinner göster
     if (loading) {
         return <LoadingSpinner />;
+    }
+
+    // Auth sistemi çökmüşse veya ciddi bir yetki hatası varsa
+    if (error) {
+        return (
+            <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                height: '100vh', backgroundColor: '#f9fafb', padding: '20px'
+            }}>
+                <div style={{
+                    maxWidth: '400px', backgroundColor: 'white', padding: '32px',
+                    borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    textAlign: 'center'
+                }}>
+                    <div style={{ color: '#ef4444', marginBottom: '16px' }}>
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ margin: '0 auto' }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '8px', margin: 0 }}>Oturum Açma Hatası</h2>
+                    <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>{error}</p>
+                    <button 
+                        onClick={() => window.location.href = '/login'}
+                        style={{
+                            backgroundColor: '#6366f1', color: 'white', border: 'none',
+                            padding: '10px 24px', borderRadius: '6px', fontWeight: '500',
+                            cursor: 'pointer', width: '100%'
+                        }}
+                    >
+                        Tekrar Giriş Yap
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     // Giriş yapılmamış — login'e yönlendir, geri dönmek için mevcut URL'yi sakla
