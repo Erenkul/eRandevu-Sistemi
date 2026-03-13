@@ -3,7 +3,7 @@
 // frontend/src/components/auth/ProtectedRoute.tsx
 // ===========================================
 
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts';
 
 interface ProtectedRouteProps {
@@ -37,6 +37,7 @@ const LoadingSpinner = () => (
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     const { user, loading, error } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Firebase auth durumu henüz belli değil — spinner göster
     if (loading) {
@@ -63,7 +64,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
                     <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', marginBottom: '8px', margin: 0 }}>Oturum Açma Hatası</h2>
                     <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>{error}</p>
                     <button 
-                        onClick={() => window.location.href = '/login'}
+                        onClick={() => navigate('/login', { replace: true })}
                         style={{
                             backgroundColor: '#6366f1', color: 'white', border: 'none',
                             padding: '10px 24px', borderRadius: '6px', fontWeight: '500',

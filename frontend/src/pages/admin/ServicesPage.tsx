@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, Clock, DollarSign, X } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin';
 import { Card, SearchInput } from '../../components/ui';
 import './ServicesPage.css';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts';
 import { useServices } from '../../hooks';
 import { createService, updateService, deleteService } from '../../services/firestore';
 import type { Service, ServiceFormData } from '../../types';

@@ -19,13 +19,17 @@ export const AdminDashboard: React.FC = () => {
 
     // İşletmesi olmayan admin → onboarding'e yönlendir
     useEffect(() => {
-        if (!businessLoading && !user?.businessId) {
-            navigate('/admin/onboarding', { replace: true });
+        if (!businessLoading) {
+            if (!user?.businessId) {
+                navigate('/admin/onboarding', { replace: true });
+            } else if (business && business.onboardingCompleted === false) {
+                navigate('/admin/onboarding', { replace: true });
+            }
         }
-    }, [businessLoading, user?.businessId, navigate]);
+    }, [businessLoading, user?.businessId, business, navigate]);
 
     // Auth yükleniyor veya business kontrol ediliyor
-    if (businessLoading || !user?.businessId) {
+    if (businessLoading || !user?.businessId || (business && business.onboardingCompleted === false)) {
         return (
             <div style={{
                 display: 'flex',

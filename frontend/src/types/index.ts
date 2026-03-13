@@ -39,6 +39,7 @@ export interface Business {
   subscriptionTier: 'starter' | 'professional' | 'business';
   subscriptionStatus: 'active' | 'trial' | 'expired' | 'cancelled';
   trialEndsAt?: Timestamp;
+  onboardingCompleted: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

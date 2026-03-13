@@ -3,7 +3,7 @@ import { Phone, Mail, Calendar, Eye, X } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin';
 import { Card, SearchInput } from '../../components/ui';
 import './ClientsPage.css';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts';
 import { useCustomers } from '../../hooks';
 import type { Customer } from '../../types';
 

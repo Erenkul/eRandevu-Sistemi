@@ -101,14 +101,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: 'customer',
             });
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error fetching user data:', err);
+          
+          // Eğer Firestore tarafında bir permission/network hatası aldıysak 
+          // (Örn: Adblocker veya izin hatası) hemen çıkış yaptırmıyoruz veya default müşteri yapmıyoruz.
+          // En azından Firebase üzerindeki bilgileri temel alarak seansı canlı tutuyoruz.
+          const isNetworkError = err.code === 'failed-precondition' || err.message?.includes('network') || err.message?.includes('offline');
+          
+          if (isNetworkError) {
+             console.warn("Veritabanına erişilemiyor. Lütfen Reklam Engelleyici kapalı olduğundan ve internete bağlı olduğunuzdan emin olun.");
+             setError("Veritabanı bağlantı hatası. Tarayıcı eklentilerinizi (AdBlock vb.) kontrol edin.");
+          }
+
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName || undefined,
             photoURL: firebaseUser.photoURL || undefined,
-            role: 'customer',
+            role: 'customer', // Yalnızca en kötü senaryoda fallback
           });
         }
       } else {

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Clock, User, Scissors, X, Check, XCircle } f
 import { AdminSidebar } from '../../components/admin';
 import { Card } from '../../components/ui';
 import './SchedulePage.css';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts';
 import { useRealtimeAppointments, useStaff } from '../../hooks';
 import { updateAppointmentStatus } from '../../services/firestore';
 import type { Appointment as FirestoreAppointment } from '../../types';

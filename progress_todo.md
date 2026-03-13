@@ -143,7 +143,7 @@ Yapılacak:
 ### 7. WhatsApp Entegrasyonu (Öncelik: YÜKSEK)
 
 ```
-Dosya: erandevu_app/functions/index.js
+Dosya: functions/src/index.ts
 
 Yapılacak:
 - [ ] Meta Business hesabı oluştur (Kullanıcı yapmalı)
@@ -181,7 +181,7 @@ Yapılacak:
 ### 9. Firestore Security Rules (Öncelik: YÜKSEK)
 
 ```
-Dosya: erandevu_app/firestore.rules
+Dosya: firestore.rules
 
 Yapılacak:
 - [ ] Test mode'dan production mode'a geç
@@ -194,7 +194,7 @@ Yapılacak:
 
 ```
 Yapılacak:
-- [ ] cd erandevu_app/functions && npm install
+- [ ] npm install (root for functions dependencies if any, or in src)
 - [ ] firebase deploy --only functions
 - [ ] Scheduler'ı aktifleştir (hatırlatmalar için)
 ```
@@ -205,14 +205,8 @@ Yapılacak:
 
 | Dosya | Açıklama |
 |-------|----------|
-| `frontend/src/lib/firebase.ts` | Firebase config |
-| `frontend/src/contexts/AuthContext.tsx` | Auth yönetimi |
-| `frontend/src/services/firestore.ts` | CRUD işlemleri |
-| `frontend/src/hooks/useFirestore.ts` | React hooks |
-| `frontend/src/types/index.ts` | TypeScript tipleri |
-| `frontend/.env.local` | Environment variables |
-| `erandevu_app/functions/index.js` | Cloud Functions |
-| `erandevu_app/firestore.rules` | Security Rules |
+| `functions/src/index.ts` | Cloud Functions |
+| `firestore.rules` | Security Rules |
 
 ---
 
@@ -223,10 +217,10 @@ Yapılacak:
 cd frontend && npm run dev
 
 # Firebase deploy (rules)
-cd erandevu_app && firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules
 
 # Firebase deploy (functions)
-cd erandevu_app && firebase deploy --only functions
+firebase deploy --only functions
 
 # Vite cache temizle
 rm -rf node_modules/.vite

@@ -8,6 +8,19 @@ import { useStaff } from '../../hooks';
 import { createStaff, updateStaff, deleteStaff } from '../../services/firestore';
 import type { Staff, StaffFormData } from '../../types';
 
+const formatStaffPhone = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
+};
+
+const validateStaffPhone = (phone: string): boolean => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length === 10 && cleaned.startsWith('5');
+};
+
 export const StaffPage: React.FC = () => {
     const { user } = useAuth();
     const { data: staffList, loading, refetch } = useStaff(user?.businessId);
@@ -62,6 +75,10 @@ export const StaffPage: React.FC = () => {
 
     const handleSave = async () => {
         if (!formData.name || !user?.businessId) return;
+        if (formData.phone && !validateStaffPhone(formData.phone)) {
+            alert('Lütfen geçerli bir telefon formatı girin (5XX XXX XX XX)');
+            return;
+        }
 
         try {
             setIsSubmitting(true);
@@ -238,9 +255,12 @@ export const StaffPage: React.FC = () => {
                                 <input
                                     type="tel"
                                     value={formData.phone || ''}
-                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="+90 5XX XXX XX XX"
+                                    onChange={e => setFormData({ ...formData, phone: formatStaffPhone(e.target.value) })}
+                                    placeholder="5XX XXX XX XX"
                                 />
+                                {formData.phone && !validateStaffPhone(formData.phone) && (
+                                    <span style={{ color: 'red', fontSize: '12px' }}>* Lütfen geçerli bir format girin (5XX XXX XX XX)</span>
+                                )}
                             </div>
 
                             <div className="form-group">

@@ -17,7 +17,7 @@ import {
     Plus,
     X,
 } from 'lucide-react';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
 import { useAuth } from '../contexts';
 import { createService, createStaff } from '../services/firestore';
@@ -63,6 +63,19 @@ interface StaffData {
     role: 'owner' | 'barber' | 'assistant';
 }
 
+const formatOnboardingPhone = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
+};
+
+const validateOnboardingPhone = (phone: string): boolean => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length === 10 && cleaned.startsWith('5');
+};
+
 export const OnboardingWizard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -78,6 +91,14 @@ export const OnboardingWizard: React.FC = () => {
         address: '',
         city: 'İstanbul',
     });
+
+    const formatBizPhone = (value: string): string => {
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length <= 3) return cleaned;
+        if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+        if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+        return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
+    };
 
     // Step 2: Working Hours
     const [workingHours, setWorkingHours] = useState<WorkingHoursData>(DEFAULT_WORKING_HOURS);
@@ -144,9 +165,13 @@ export const OnboardingWizard: React.FC = () => {
 
     // Handle staff change
     const handleStaffChange = (index: number, field: keyof StaffData, value: string) => {
+        let finalValue = value;
+        if (field === 'phone') {
+            finalValue = formatOnboardingPhone(value);
+        }
         setStaffList(prev => {
             const updated = [...prev];
-            updated[index] = { ...updated[index], [field]: value };
+            updated[index] = { ...updated[index], [field]: finalValue };
             return updated;
         });
     };
@@ -165,13 +190,13 @@ export const OnboardingWizard: React.FC = () => {
     const canProceed = (): boolean => {
         switch (currentStep) {
             case 1:
-                return !!(businessInfo.name && businessInfo.slug && businessInfo.phone && businessInfo.address);
+                return !!(businessInfo.name && businessInfo.slug && businessInfo.phone && validateOnboardingPhone(businessInfo.phone) && businessInfo.address);
             case 2:
                 return Object.values(workingHours).some(h => h.isOpen);
             case 3:
                 return true; // Optional step
             case 4:
-                return true; // Optional step
+                return staffList.every(staff => !staff.phone || validateOnboardingPhone(staff.phone)); // Valid staff phones format
             case 5:
                 return true;
             default:
@@ -203,13 +228,15 @@ export const OnboardingWizard: React.FC = () => {
         setError(null);
 
         try {
-            // 1. Create Business Document
-            const businessId = `biz_${Date.now()}`;
+            // 1. Update existing Business Document (created during registration)
+            if (!user.businessId) {
+                throw new Error('İşletme kimliği bulunamadı. Lütfen tekrar giriş yapın.');
+            }
+            
+            const businessId = user.businessId;
             const businessRef = doc(db, COLLECTIONS.BUSINESSES, businessId);
 
-            await setDoc(businessRef, {
-                id: businessId,
-                ownerId: user.uid,
+            await updateDoc(businessRef, {
                 name: businessInfo.name,
                 slug: businessInfo.slug,
                 phone: businessInfo.phone,
@@ -222,8 +249,8 @@ export const OnboardingWizard: React.FC = () => {
                 smsUsed: 0,
                 subscriptionTier: 'starter',
                 subscriptionStatus: 'trial',
-                createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
+                onboardingCompleted: true,
                 isActive: true
             });
 
@@ -250,16 +277,14 @@ export const OnboardingWizard: React.FC = () => {
                 }
             }
 
-            // 4. Update User Profile with businessId
+            // 4. Update User Profile with final businessName
             const userRef = doc(db, COLLECTIONS.USERS, user.uid);
             await updateDoc(userRef, {
-                businessId: businessId,
                 businessName: businessInfo.name
             });
 
             // 5. Navigate to Admin Dashboard
-            navigate('/admin');
-            window.location.reload();
+            navigate('/admin', { replace: true });
 
         } catch (err: unknown) {
             console.error('Error creating business:', err);
@@ -329,8 +354,8 @@ export const OnboardingWizard: React.FC = () => {
                     <input
                         type="tel"
                         value={businessInfo.phone}
-                        onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })}
-                        placeholder="05XX XXX XX XX"
+                        onChange={(e) => setBusinessInfo({ ...businessInfo, phone: formatBizPhone(e.target.value) })}
+                        placeholder="5XX XXX XX XX"
                     />
                 </div>
                 <div className="form-group">
@@ -510,8 +535,11 @@ export const OnboardingWizard: React.FC = () => {
                                 type="tel"
                                 value={staff.phone}
                                 onChange={(e) => handleStaffChange(index, 'phone', e.target.value)}
-                                placeholder="05XX XXX XX XX"
+                                placeholder="5XX XXX XX XX"
                             />
+                            {staff.phone && !validateOnboardingPhone(staff.phone) && (
+                                <span style={{ color: 'red', fontSize: '12px' }}>Lütfen geçerli bir format girin (5XX XXX XX XX)</span>
+                            )}
                         </div>
                     </div>
                 </div>

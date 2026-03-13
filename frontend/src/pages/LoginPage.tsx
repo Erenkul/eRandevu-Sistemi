@@ -18,19 +18,19 @@ interface FormErrors {
     terms?: string;
 }
 
-// Phone format helper
+// Phone format helper (10 digits: 5XX XXX XX XX)
 const formatPhoneNumber = (value: string): string => {
     const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length <= 4) return cleaned;
-    if (cleaned.length <= 7) return `${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
-    if (cleaned.length <= 9) return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
-    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7, 9)} ${cleaned.slice(9, 11)}`;
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
 };
 
-// Phone validation
+// Phone validation (10 digits starting with 5)
 const validatePhone = (phone: string): boolean => {
     const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length === 11 && cleaned.startsWith('05');
+    return cleaned.length === 10 && cleaned.startsWith('5');
 };
 
 // Email validation
@@ -153,7 +153,7 @@ export const LoginPage: React.FC = () => {
                 if (!phone) {
                     newErrors.phone = 'Telefon numarası gerekli';
                 } else if (!validatePhone(phone)) {
-                    newErrors.phone = 'Geçerli bir telefon numarası girin (05XX XXX XX XX)';
+                    newErrors.phone = 'Geçerli bir telefon numarası girin (5XX XXX XX XX)';
                 } else {
                     delete newErrors.phone;
                 }
@@ -580,7 +580,7 @@ export const LoginPage: React.FC = () => {
                                     label="Telefon Numarası"
                                     type="tel"
                                     icon={Phone}
-                                    placeholder="05XX XXX XX XX"
+                                    placeholder="5XX XXX XX XX"
                                     value={phone}
                                     onChange={handlePhoneChange}
                                     onBlur={() => handleBlur('phone')}

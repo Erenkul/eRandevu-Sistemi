@@ -18,12 +18,12 @@ interface ContactFormProps {
     onChange: (data: ContactData) => void;
 }
 
-const formatPhoneNumber = (value: string): string => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length <= 4) return cleaned;
-    if (cleaned.length <= 7) return `${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
-    if (cleaned.length <= 9) return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
-    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7, 9)} ${cleaned.slice(9, 11)}`;
+const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6) return `${numbers.slice(0, 3)} ${numbers.slice(3)}`;
+    if (numbers.length <= 8) return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6)}`;
+    return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6, 8)} ${numbers.slice(8, 10)}`;
 };
 
 const validatePhone = (phone: string): boolean => {
@@ -59,7 +59,11 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        const formatted = name === 'phone' ? formatPhoneNumber(value) : value;
+        // The instruction implies a change in how phone formatting is handled,
+        // but the `handleChange` function itself is not changed in the instruction.
+        // To align with the new `formatPhone` and the `onChange` call for the phone input,
+        // we'll adapt this to use the new `formatPhone` directly for the 'phone' field.
+        const formatted = name === 'phone' ? formatPhone(value) : value;
         updateField(name, formatted);
     };
 
@@ -121,9 +125,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                         <Input
                             label="Telefon Numarası *"
                             name="phone"
-                            placeholder="05XX XXX XX XX"
+                            placeholder="5XX XXX XX XX"
                             value={formData.phone}
-                            onChange={handleChange}
+                            onChange={handleChange} // Keep original handleChange, it now uses formatPhone
                             onBlur={() => handleBlur('phone')}
                             className={errors.phone && touched.phone ? 'input-error' : ''}
                         />
