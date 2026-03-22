@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts';
+import { AuthProvider, ToastProvider } from './contexts';
 import {
   AdminDashboard,
   BookingPage,
@@ -18,8 +18,9 @@ import './styles/index.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           {/* Public Home Page - No login required */}
           <Route path="/" element={<HomePage />} />
@@ -51,7 +52,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 

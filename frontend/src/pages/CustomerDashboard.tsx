@@ -1,9 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Calendar,
     Clock,
-    MapPin,
     Heart,
     User,
     LogOut,
@@ -18,9 +17,9 @@ import {
     Trash2,
     HeartOff,
 } from 'lucide-react';
-import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { PrimaryButton, SecondaryButton, Input } from '../components/ui';
 import './CustomerDashboard.css';
-import { useAuth } from '../contexts';
+import { useAuth, useToast } from '../contexts';
 import { useCustomerAppointments } from '../hooks';
 import { updateAppointmentStatus } from '../services/firestore';
 import type { Appointment } from '../types';
@@ -87,7 +86,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
 export const CustomerDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout, updateUserProfile } = useAuth();
+    const { showToast } = useToast();
 
     // Fetch real appointments using the user's phone number
     const { data: rawAppointments, loading: appointmentsLoading, refetch } = useCustomerAppointments(user?.phoneNumber);
@@ -98,6 +98,35 @@ export const CustomerDashboard: React.FC = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+
+    const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+    const [editProfileData, setEditProfileData] = useState({ displayName: '', phoneNumber: '' });
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setEditProfileData({
+                displayName: user.displayName || '',
+                phoneNumber: user.phoneNumber || ''
+            });
+        }
+    }, [user, showEditProfileModal]);
+
+    const handleUpdateProfile = async () => {
+        try {
+            setIsUpdatingProfile(true);
+            await updateUserProfile({
+                displayName: editProfileData.displayName,
+                phoneNumber: editProfileData.phoneNumber
+            });
+            setShowEditProfileModal(false);
+            showToast('Profil başarıyla güncellendi', 'success');
+        } catch (error) {
+            console.error('Profil güncellenirken hata:', error);
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
 
     // Derived lists
     const upcomingAppointments = useMemo(() =>
@@ -136,9 +165,11 @@ export const CustomerDashboard: React.FC = () => {
             await updateAppointmentStatus(selectedAppointment.id, 'cancelled', 'Müşteri tarafından iptal edildi.');
             setShowCancelModal(false);
             setSelectedAppointment(null);
+            showToast('Randevu başarıyla iptal edildi', 'success');
             refetch();
         } catch (err) {
             console.error('İptal hatası:', err);
+            showToast('Randevu iptal edilemedi', 'error');
         } finally {
             setIsCancelling(false);
         }
@@ -187,10 +218,6 @@ export const CustomerDashboard: React.FC = () => {
                         <span>
                             <Clock size={14} />
                             {time}
-                        </span>
-                        <span>
-                            <MapPin size={14} />
-                            {appointment.businessId}
                         </span>
                     </div>
                 </div>
@@ -488,7 +515,7 @@ export const CustomerDashboard: React.FC = () => {
                                     <h2>{user?.displayName || 'İsimsiz Kullanıcı'}</h2>
                                     <span>Müşteri Hesabı</span>
                                 </div>
-                                <SecondaryButton icon={Edit2} size="small">
+                                <SecondaryButton icon={Edit2} size="small" onClick={() => setShowEditProfileModal(true)}>
                                     Düzenle
                                 </SecondaryButton>
                             </div>
@@ -624,6 +651,38 @@ export const CustomerDashboard: React.FC = () => {
                             style={{ background: 'var(--color-error)' }}
                         >
                             {isCancelling ? 'İptal ediliyor...' : 'Evet, İptal Et'}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Profile Modal */}
+            <Modal
+                isOpen={showEditProfileModal}
+                onClose={() => !isUpdatingProfile && setShowEditProfileModal(false)}
+                title="Profili Düzenle"
+            >
+                <div className="edit-profile-form" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <Input
+                        label="Ad Soyad"
+                        value={editProfileData.displayName}
+                        onChange={(e) => setEditProfileData({ ...editProfileData, displayName: e.target.value })}
+                        disabled={isUpdatingProfile}
+                        placeholder="Adınız ve Soyadınız"
+                    />
+                    <Input
+                        label="Telefon Numarası"
+                        value={editProfileData.phoneNumber}
+                        onChange={(e) => setEditProfileData({ ...editProfileData, phoneNumber: e.target.value })}
+                        disabled={isUpdatingProfile}
+                        placeholder="5XX XXX XX XX"
+                    />
+                    <div className="modal-actions" style={{ marginTop: '8px' }}>
+                        <SecondaryButton onClick={() => setShowEditProfileModal(false)} disabled={isUpdatingProfile}>
+                            İptal
+                        </SecondaryButton>
+                        <PrimaryButton onClick={handleUpdateProfile} disabled={isUpdatingProfile || !editProfileData.displayName.trim()}>
+                            {isUpdatingProfile ? 'Kaydediliyor...' : 'Kaydet'}
                         </PrimaryButton>
                     </div>
                 </div>

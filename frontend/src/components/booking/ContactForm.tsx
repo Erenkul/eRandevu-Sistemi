@@ -19,7 +19,9 @@ interface ContactFormProps {
 }
 
 const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
+    let numbers = value.replace(/\D/g, '');
+    if (numbers.startsWith('0')) numbers = numbers.substring(1);
+    
     if (numbers.length <= 3) return numbers;
     if (numbers.length <= 6) return `${numbers.slice(0, 3)} ${numbers.slice(3)}`;
     if (numbers.length <= 8) return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6)}`;
@@ -28,7 +30,7 @@ const formatPhone = (value: string) => {
 
 const validatePhone = (phone: string): boolean => {
     const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length === 11 && cleaned.startsWith('05');
+    return cleaned.length === 10 && cleaned.startsWith('5');
 };
 
 const validateEmail = (email: string): boolean => {

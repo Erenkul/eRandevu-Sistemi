@@ -12,3 +12,17 @@ I have bypassed the authentication process and have successfully logged in to th
 - [ ] **Gerçek SMS/E-posta Doğrulaması:** `LoginPage` içerisindeki SMS doğrulama adımı şu an "Demo" formatında çalışıyor. Firebase Phone Auth veya e-posta doğrulama tetiğini gerçek sisteme bağla.
 - [ ] **Firestore Güvenlik Kuralları (Security Rules):** Firestore veritabanını testlerde sahte (mock) olarak kullandık ancak sunucu tarafındaki "sadece admin randevuyu silebilir" gibi gerçek güvenlik önlemlerini yazıp Firebase Emulator ile doğrula.
 - [ ] **Gelişmiş Form Validasyonları:** Rezervasyon (Booking) sayfasında alınan müşteri notları ve geçmiş saat engellemeleri gibi spesifik iş mantıkları için daha katı denetlemeler ekle.
+
+
+
+**** 
+Hakan 
+
+
+Sorunlar
+
+-Sayfa navigasyonlarında ileri geri yaparken sayfa yenileniyor ve bazen hesaptan otomatik oalrak atıyor 
+-işletme hesaplarında var oaln servisler, ana sayfadaki kartlarda gözükmüyor
+-işletmelerin sahip olduğu servislere ait fiyar bilgisi işletmeye bağlı olarka gözükebilmelii
+-numara girişindeki 0 kalkmalı 
+-onboarding de bulunan personel ekleme kısmında personellerin telefon numaraları daha az ya da daha fazlaa olabiliyor

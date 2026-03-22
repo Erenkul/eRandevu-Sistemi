@@ -82,6 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (userDoc.exists()) {
             const userData = userDoc.data();
+            const role = userData.role || 'customer';
+            localStorage.setItem(`erandevu_role_${firebaseUser.uid}`, role);
+            
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
@@ -90,15 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phoneNumber: userData.phoneNumber,
               businessId: userData.businessId,
               businessName: userData.businessName,
-              role: userData.role || 'customer',
+              role,
             });
           } else {
+            const cachedRole = localStorage.getItem(`erandevu_role_${firebaseUser.uid}`) as any || 'customer';
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
               displayName: firebaseUser.displayName || undefined,
               photoURL: firebaseUser.photoURL || undefined,
-              role: 'customer',
+              role: cachedRole,
             });
           }
         } catch (err: any) {
@@ -114,12 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
              setError("Veritabanı bağlantı hatası. Tarayıcı eklentilerinizi (AdBlock vb.) kontrol edin.");
           }
 
+          const cachedRole = localStorage.getItem(`erandevu_role_${firebaseUser.uid}`) as any || 'customer';
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName || undefined,
             photoURL: firebaseUser.photoURL || undefined,
-            role: 'customer', // Yalnızca en kötü senaryoda fallback
+            role: cachedRole, // Fallback to cached instead of forcing 'customer'
           });
         }
       } else {

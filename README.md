@@ -1,2 +1,3 @@
-# erandevu
-the website for make a web
+# eRandevu - SaaS Randevu Yönetim Platformu
+
+eRandevu, işletmeler için modern bir randevu ve müşteri yönetim sistemidir.

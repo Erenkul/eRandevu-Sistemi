@@ -64,7 +64,9 @@ interface StaffData {
 }
 
 const formatOnboardingPhone = (value: string): string => {
-    const cleaned = value.replace(/\D/g, '');
+    let cleaned = value.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) cleaned = cleaned.substring(1);
+    
     if (cleaned.length <= 3) return cleaned;
     if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
     if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
@@ -93,7 +95,9 @@ export const OnboardingWizard: React.FC = () => {
     });
 
     const formatBizPhone = (value: string): string => {
-        const cleaned = value.replace(/\D/g, '');
+        let cleaned = value.replace(/\D/g, '');
+        if (cleaned.startsWith('0')) cleaned = cleaned.substring(1);
+        
         if (cleaned.length <= 3) return cleaned;
         if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
         if (cleaned.length <= 8) return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;

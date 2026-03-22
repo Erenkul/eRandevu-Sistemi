@@ -68,8 +68,12 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
         return date < today;
     };
 
+    const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
+
     const prevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+        if (!isCurrentMonth) {
+            setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+        }
     };
 
     const nextMonth = () => {
@@ -119,7 +123,11 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
                             {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                         </h3>
                         <div className="calendar-nav">
-                            <button onClick={prevMonth}>
+                            <button 
+                                onClick={prevMonth} 
+                                disabled={isCurrentMonth}
+                                style={{ opacity: isCurrentMonth ? 0.3 : 1, cursor: isCurrentMonth ? 'not-allowed' : 'pointer' }}
+                            >
                                 <ChevronLeft size={18} />
                             </button>
                             <button onClick={nextMonth}>

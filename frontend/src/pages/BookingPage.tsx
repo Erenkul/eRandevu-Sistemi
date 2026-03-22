@@ -88,7 +88,7 @@ export const BookingPage: React.FC = () => {
             case 3: {
                 if (!contactData) return false;
                 const cleanPhone = contactData.phone.replace(/\D/g, '');
-                const validPhone = cleanPhone.length === 11 && cleanPhone.startsWith('05');
+                const validPhone = cleanPhone.length === 10 && cleanPhone.startsWith('5');
                 const validName = contactData.fullName.trim().split(' ').length >= 2;
                 return validName && validPhone;
             }
