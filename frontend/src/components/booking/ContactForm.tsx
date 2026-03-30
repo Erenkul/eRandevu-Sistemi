@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, MessageCircle, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { Input } from '../ui';
+import { useAuth } from '../../contexts';
 import './ContactForm.css';
 
 export interface ContactData {
@@ -38,13 +39,15 @@ const validateEmail = (email: string): boolean => {
 };
 
 export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
-    const [formData, setFormData] = useState<ContactData>({
-        fullName: '',
-        phone: '',
-        email: '',
+    const { user } = useAuth();
+    
+    const [formData, setFormData] = useState<ContactData>(() => ({
+        fullName: user?.displayName || '',
+        phone: user?.phoneNumber || '',
+        email: user?.email || '',
         note: '',
         whatsappReminder: true,
-    });
+    }));
 
     const [errors, setErrors] = useState<Partial<Record<keyof ContactData, string>>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -54,6 +57,17 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
         onChange(formData);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData]);
+
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                fullName: prev.fullName || user.displayName || '',
+                phone: prev.phone || user.phoneNumber || '',
+                email: prev.email || user.email || '',
+            }));
+        }
+    }, [user]);
 
     const updateField = (name: string, value: string | boolean) => {
         setFormData((prev) => ({ ...prev, [name]: value }));

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Search,
@@ -13,11 +13,13 @@ import {
     Stethoscope,
     Building2,
     LogIn,
+    User,
     X,
     CalendarCheck,
     CheckCircle2
 } from 'lucide-react';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { useAuth } from '../contexts';
 import './HomePage.css';
 
 import { useBusinesses, useServices } from '../hooks';
@@ -63,10 +65,12 @@ type ModalType = 'pricing' | 'faq' | 'about' | 'contact' | 'careers' | 'privacy'
 
 export const HomePage: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [activeNav, setActiveNav] = useState<ActiveNav>('home');
     const [activeModal, setActiveModal] = useState<ModalType>(null);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
     const { data: businesses, loading: businessesLoading } = useBusinesses();
 
     // Refs for scroll
@@ -97,15 +101,38 @@ export const HomePage: React.FC = () => {
         // Fallback or generic category mapping if category doesn't strictly exist on Type business
         // Real logic: Business type doesn't have a strict category string, but we can search description/name
 
-        const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            business.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            business.address.toLowerCase().includes(searchQuery.toLowerCase());
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = 
+            (business.name && business.name.toLowerCase().includes(searchLower)) ||
+            (business.city && business.city.toLowerCase().includes(searchLower)) ||
+            (business.address && business.address.toLowerCase().includes(searchLower));
 
         if (selectedCategory === 'all') return matchesSearch;
 
         // Simplified category filter (since we don't have explicit categories in DB yet, filtering mostly by name/desc)
-        return matchesSearch && business.name.toLowerCase().includes(selectedCategory);
+        return matchesSearch && (business.name && business.name.toLowerCase().includes(selectedCategory));
     });
+
+    const dropdownResults = useMemo(() => {
+        if (!searchQuery.trim() || businessesLoading) return [];
+        const searchLower = searchQuery.toLowerCase();
+        
+        const results = businesses.map(b => {
+             let score = 0;
+             const nameMatch = b.name?.toLowerCase().includes(searchLower) || false;
+             const cityMatch = b.city?.toLowerCase().includes(searchLower) || false;
+             const addressMatch = b.address?.toLowerCase().includes(searchLower) || false;
+             
+             if (nameMatch) score = 3;
+             else if (cityMatch) score = 2;
+             else if (addressMatch) score = 1;
+
+             return { business: b, score };
+        }).filter(item => item.score > 0);
+
+        results.sort((a, b) => b.score - a.score);
+        return results.slice(0, 5);
+    }, [businesses, searchQuery, businessesLoading]);
 
 // Extract BusinessCard to manage its own services fetching
 const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: (slug: string) => void }> = ({ business, isOpen, onBook }) => {
@@ -174,6 +201,12 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
 
     const handleLogin = () => {
         navigate('/login');
+    };
+
+    const handleDashboard = () => {
+        if (user) {
+            navigate(user.role === 'customer' ? '/customer' : '/admin');
+        }
     };
 
     const scrollToSection = (section: ActiveNav) => {
@@ -346,9 +379,15 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                     </button>
                 </div>
                 <div className="home-header-actions">
-                    <SecondaryButton icon={LogIn} onClick={handleLogin}>
-                        Giriş Yap
-                    </SecondaryButton>
+                    {user ? (
+                        <SecondaryButton icon={User} onClick={handleDashboard}>
+                            {user.displayName || 'Panelim'}
+                        </SecondaryButton>
+                    ) : (
+                        <SecondaryButton icon={LogIn} onClick={handleLogin}>
+                            Giriş Yap
+                        </SecondaryButton>
+                    )}
                 </div>
             </header>
 
@@ -372,11 +411,31 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                                 placeholder="İşletme, hizmet veya konum ara..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                             />
                             {searchQuery && (
                                 <button type="button" className="search-clear" onClick={clearSearch}>
                                     <X size={16} />
                                 </button>
+                            )}
+                            
+                            {isSearchFocused && dropdownResults.length > 0 && (
+                                <div className="search-dropdown">
+                                    {dropdownResults.map((item) => (
+                                        <div 
+                                            key={item.business.id} 
+                                            className="search-dropdown-item"
+                                            onMouseDown={() => handleBooking(item.business.slug)}
+                                        >
+                                            <span className="search-dropdown-name">{item.business.name}</span>
+                                            <span className="search-dropdown-location">
+                                                <MapPin size={12} />
+                                                {item.business.city}{item.business.address ? `, ${item.business.address}` : ''}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                         <PrimaryButton type="submit" icon={Search}>

@@ -1,5 +1,8 @@
 import React from 'react';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts';
+import { SecondaryButton } from '../ui';
 import './BookingHeader.css';
 
 interface BookingHeaderProps {
@@ -16,6 +19,15 @@ const steps = [
 ];
 
 export const BookingHeader: React.FC<BookingHeaderProps> = ({ currentStep, businessName, onBack }) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleDashboard = () => {
+        if (user) {
+            navigate(user.role === 'customer' ? '/customer' : '/admin');
+        }
+    };
+
     return (
         <header className="booking-header">
             <div className="booking-header-content">
@@ -56,6 +68,14 @@ export const BookingHeader: React.FC<BookingHeaderProps> = ({ currentStep, busin
                             )}
                         </React.Fragment>
                     ))}
+                </div>
+
+                <div className="booking-header-right" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
+                    {user && (
+                        <SecondaryButton icon={User} onClick={handleDashboard} style={{ background: '#f3f4f6' }}>
+                            Panelime Dön
+                        </SecondaryButton>
+                    )}
                 </div>
             </div>
         </header>
