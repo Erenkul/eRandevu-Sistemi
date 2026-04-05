@@ -89,7 +89,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
         const newErrors = { ...errors };
         if (field === 'fullName') {
             if (!formData.fullName.trim()) newErrors.fullName = 'Ad soyad gerekli';
-            else if (formData.fullName.trim().split(' ').length < 2) newErrors.fullName = 'Lütfen ad ve soyad girin';
+            else if (formData.fullName.trim().length < 2) newErrors.fullName = 'Lütfen en az 2 karakter girin';
             else delete newErrors.fullName;
         }
         if (field === 'phone') {
@@ -104,7 +104,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
         setErrors(newErrors);
     };
 
-    const isValidName = formData.fullName.trim().split(' ').length >= 2 && formData.fullName.trim().length > 0;
+    const isValidName = formData.fullName.trim().length >= 2;
 
     return (
         <div className="contact-form">
@@ -141,7 +141,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                         <Input
                             label="Telefon Numarası *"
                             name="phone"
-                            placeholder="5XX XXX XX XX"
+                            type="tel"
+                            placeholder="05XX XXX XX XX"
                             value={formData.phone}
                             onChange={handleChange} // Keep original handleChange, it now uses formatPhone
                             onBlur={() => handleBlur('phone')}

@@ -89,7 +89,8 @@ export const BookingPage: React.FC = () => {
                 if (!contactData) return false;
                 const cleanPhone = contactData.phone.replace(/\D/g, '');
                 const validPhone = cleanPhone.length === 10 && cleanPhone.startsWith('5');
-                const validName = contactData.fullName.trim().split(' ').length >= 2;
+                // Sadece adı girip geçebilmesi için kısıtlamayı esnettik
+                const validName = contactData.fullName.trim().length >= 2;
                 return validName && validPhone;
             }
             default: return false;
