@@ -1,17 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Clock, User, Scissors, X, Check, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, User, Scissors, X, Check, XCircle, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '../../components/admin';
 import { Card } from '../../components/ui';
 import './SchedulePage.css';
 import { useAuth } from '../../contexts';
-import { useRealtimeAppointments, useStaff } from '../../hooks';
+import { useRealtimeAppointments, useStaff, useBusiness } from '../../hooks';
 import { updateAppointmentStatus } from '../../services/firestore';
 import type { Appointment as FirestoreAppointment } from '../../types';
 
 export const SchedulePage: React.FC = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const businessId = user?.businessId;
 
+    const { data: business } = useBusiness(businessId);
     const { data: staffList, loading: staffLoading } = useStaff(businessId);
     const { data: realAppointments, loading: apptLoading } = useRealtimeAppointments(businessId);
 
@@ -152,6 +155,17 @@ export const SchedulePage: React.FC = () => {
                             Hafta
                         </button>
                     </div>
+
+                    <button
+                        className="btn-primary"
+                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                        onClick={() => {
+                            if (business?.slug) navigate(`/book/${business.slug}`);
+                        }}
+                    >
+                        <Plus size={16} />
+                        Yeni Randevu
+                    </button>
                 </header>
 
                 <div className="admin-content">

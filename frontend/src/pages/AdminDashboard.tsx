@@ -94,7 +94,9 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <button className="fab-button" onClick={() => navigate('/admin/schedule')}>
+                <button className="fab-button" onClick={() => {
+                    if (business?.slug) navigate(`/book/${business.slug}`);
+                }}>
                     <Plus size={20} />
                     YENİ RANDEVU
                 </button>
@@ -110,14 +112,17 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                         <div className="modal-body" style={{ padding: 24 }}>
                             <p style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>
-                                Randevu eklemek için Takvim sayfasını kullanabilir ya da müşterinin booking linkini paylaşabilirsiniz.
+                                Müşteri adına randevu oluşturmak için rezervasyon sayfasını kullanın.
                             </p>
                             <button
                                 className="btn-primary"
                                 style={{ width: '100%' }}
-                                onClick={() => { setShowNewAppointmentModal(false); navigate('/admin/schedule'); }}
+                                onClick={() => {
+                                    setShowNewAppointmentModal(false);
+                                    if (business?.slug) navigate(`/book/${business.slug}`);
+                                }}
                             >
-                                Takvime Git
+                                Randevu Oluştur
                             </button>
                         </div>
                     </div>

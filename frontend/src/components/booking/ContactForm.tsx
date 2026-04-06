@@ -142,7 +142,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                             label="Telefon Numarası *"
                             name="phone"
                             type="tel"
-                            placeholder="05XX XXX XX XX"
+                            placeholder="5XX XXX XX XX"
                             value={formData.phone}
                             onChange={handleChange} // Keep original handleChange, it now uses formatPhone
                             onBlur={() => handleBlur('phone')}

@@ -3,4 +3,7 @@ node_modules
 build
 dist
 .env
+.claude/
+frontend/coverage/
+functions/lib/
 

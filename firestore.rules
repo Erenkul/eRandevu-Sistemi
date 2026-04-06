@@ -3,18 +3,24 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // --- Helper Functions ---
-    // Kullanıcının oturum açıp açmadığını kontrol eder
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Veriyi okuyan veya yazan kişinin o işletmenin sahibi olup olmadığını kontrol eder
     function isOwner(businessId) {
       return isAuthenticated() && 
         get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
     }
 
-    // --- BÖLÜM 1: İŞLETMELER, HİZMETLER VE PERSONELLER (Public Read, Owner Write) ---
+    // --- BÖLÜM 0: KULLANICILAR (Users) ---
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // --- BÖLÜM 1: İŞLETMELER, HİZMETLER VE PERSONELLER ---
     match /businesses/{businessId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
@@ -23,66 +29,57 @@ service cloud.firestore {
     
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isOwner(request.resource.data.businessId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.businessId);
       allow update, delete: if isOwner(resource.data.businessId);
     }
     
     match /staff/{staffId} {
       allow read: if true;
-      allow create: if isOwner(request.resource.data.businessId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.businessId);
       allow update, delete: if isOwner(resource.data.businessId);
     }
 
     // --- BÖLÜM 2: RANDEVU MANTIĞI & GÖLGE DOKÜMANLAR ---
     
-    // Gölge Dokümanlar (daily_schedules)
-    // Sadece Transaction ile veri şeması tutarlıysa eklenebilir. 
     match /daily_schedules/{scheduleId} {
-      allow read: if true; // Herkes uygun saatleri görmek için okuyabilir.
+      allow read: if true;
       
-      // Frontend Transaction mecburi olarak Update/Set tetikler. 
-      // Sadece kurallara uygun geçerli anahtarlarla (gölge formatı) yazılabilir.
-      allow create, update: if 
+      allow create, update: if
         request.resource.data.keys().hasAll(['businessId', 'staffId', 'date', 'appointments']) && 
         request.resource.data.businessId is string &&
-        request.resource.data.staffId is string;
+        request.resource.data.staffId is string &&
+        request.resource.data.appointments is list;
         
-      allow delete: if isOwner(resource.data.businessId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.businessId);
     }
 
     // Asıl Randevular (appointments)
     match /appointments/{appointmentId} {
-      // DEVASA VERİ SIZINTISI ENGELİ (Scrape Koruması YÜKSELTİLDİ):
-      // Dışarıdan (misafir) herhangi biri toplu randevu çekemez.
-      // DİKKAT: allow list içinde isOwner() metodunu kullanınca Firebase Document Reading (get limit)
-      // sınırına takılıp direkt sistemi ("Admin Dashboard" sayfası) kilitliyor (Permission Denied).
-      // Backend transaction güvenliğini ve Admin Panelini koruyup kurtaran optimize kural:
-      allow list: if isAuthenticated(); 
+      // Admin panel lists appointments — authenticated users only
+      // Multi-tenant isolation is enforced by query filters (where businessId == user's businessId)
+      allow list: if isAuthenticated();
+
+      // Public read needed for transaction conflict checks in createAppointment
+      // Appointment IDs are Firestore auto-generated (20+ random chars), not guessable
+      allow get: if true;
       
-      // Ancak randevu oluşturulurken Backend Transaction arka planda 
-      // id'sini bildiği çakışan dökümanı okumak ZORUNDADIR! 
-      // Kimse 20 haneli rastgele Firestore ID'sini tahmin edip sızamayacağı için
-      // tekil get komutu zararsızdır ve transaction mimarisi için elzemdir.
-      allow get: if true; 
-      
-      // Randevu oluşturulurken zorunlu alanlar kısıtlanır, zararlı/eksik veri engellenir.
+      // Public booking flow — no auth required, but must have required fields
       allow create: if 
         request.resource.data.keys().hasAll(['businessId', 'staffId', 'customerName', 'customerPhone', 'dateTime', 'services', 'status']) &&
         request.resource.data.status == 'pending';
       
-      // Yönetici (Owner) randevuyu silebilir, güncelleyebilir veya onaylayabilir.
-      allow update, delete: if isOwner(resource.data.businessId);
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.businessId)
+      );
     }
 
     // --- BÖLÜM 3: MÜŞTERİLER (Customers) ---
     match /customers/{customerId} {
-      // Müşteri verilerini SADECE işletme sahibi okuyabilir (Gizlilik/KVKK)
       allow read, update, delete: if isOwner(resource.data.businessId);
       
-      // Randevu formundan "yeni müşteri" kaydı eklenebileceği için public create açıktır,
-      // ancak sadece isim/telefon alanları zorunlu kılınmıştır.
-      allow create: if 
-        request.resource.data.keys().hasAll(['businessId', 'name', 'phone']);
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['businessId', 'name', 'phone']) &&
+        isOwner(request.resource.data.businessId);
     }
   }
 }

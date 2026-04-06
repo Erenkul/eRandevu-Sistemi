@@ -175,7 +175,9 @@ export interface User {
   email: string;
   displayName?: string;
   photoURL?: string;
+  phoneNumber?: string;
   businessId?: string; // İşletme sahibi ise
+  businessName?: string;
   role: 'admin' | 'staff' | 'customer';
 }
 

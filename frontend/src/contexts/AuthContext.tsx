@@ -10,29 +10,18 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, type FieldValue } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
-
-// User type defined locally to avoid import issues
-// User type defined locally to avoid import issues
-export interface User {
-  uid: string;
-  email: string;
-  displayName?: string;
-  photoURL?: string;
-  phoneNumber?: string;
-  businessId?: string;
-  businessName?: string;
-  role: 'admin' | 'staff' | 'customer';
-}
+import type { User } from '../types';
 
 export interface RegisterUserData {
   email: string;
   displayName: string;
   role: 'admin' | 'staff' | 'customer';
-  createdAt: any; // FieldValue from firestore
-  updatedAt: any;
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
   phoneNumber?: string;
   businessId?: string;
   businessName?: string;
@@ -74,6 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const setMinimalUser = (firebaseUser: FirebaseUser, userError?: string) => {
+    if (userError) setError(userError);
+    setUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email || '',
+      displayName: firebaseUser.displayName || undefined,
+      photoURL: firebaseUser.photoURL || undefined,
+      role: 'customer',
+      phoneNumber: undefined,
+      businessId: undefined,
+      businessName: undefined,
+    });
+    setLoading(false);
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -83,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const role = userData.role || 'customer';
-            localStorage.setItem(`erandevu_role_${firebaseUser.uid}`, role);
             
             setUser({
               uid: firebaseUser.uid,
@@ -95,42 +98,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               businessName: userData.businessName,
               role,
             });
+            setLoading(false);
           } else {
-            const cachedRole = localStorage.getItem(`erandevu_role_${firebaseUser.uid}`) as any || 'customer';
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || undefined,
-              photoURL: firebaseUser.photoURL || undefined,
-              role: cachedRole,
-            });
+            console.warn('User document not found, using minimal data');
+            setMinimalUser(firebaseUser);
+            return;
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('Error fetching user data:', err);
           
-          // Eğer Firestore tarafında bir permission/network hatası aldıysak 
-          // (Örn: Adblocker veya izin hatası) hemen çıkış yaptırmıyoruz veya default müşteri yapmıyoruz.
-          // En azından Firebase üzerindeki bilgileri temel alarak seansı canlı tutuyoruz.
-          const isNetworkError = err.code === 'failed-precondition' || err.message?.includes('network') || err.message?.includes('offline');
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          const isPermissionError = errorMessage.includes('permission') || errorMessage.includes('Missing or insufficient permissions');
+          const isNetworkError = errorMessage.includes('network') || errorMessage.includes('offline');
+          const isBlockedError = errorMessage.includes('BLOCKED');
+          
+          if (isBlockedError) {
+            setMinimalUser(firebaseUser, "Firebase bağlantısı engellendi. Lütfen Reklam Engelleyici (AdBlock) eklentisini devre dışı bırakın veya bu site için beyaz listeye alın.");
+            return;
+          }
           
           if (isNetworkError) {
-             console.warn("Veritabanına erişilemiyor. Lütfen Reklam Engelleyici kapalı olduğundan ve internete bağlı olduğunuzdan emin olun.");
-             setError("Veritabanı bağlantı hatası. Tarayıcı eklentilerinizi (AdBlock vb.) kontrol edin.");
+            setMinimalUser(firebaseUser, "Veritabanı bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.");
+            return;
+          }
+          
+          if (isPermissionError) {
+            setMinimalUser(firebaseUser, "Veritabanı erişim izni yok. Lütfen daha sonra tekrar deneyin veya iletişim formunu kullanın.");
+            return;
           }
 
-          const cachedRole = localStorage.getItem(`erandevu_role_${firebaseUser.uid}`) as any || 'customer';
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName || undefined,
-            photoURL: firebaseUser.photoURL || undefined,
-            role: cachedRole, // Fallback to cached instead of forcing 'customer'
-          });
+          setMinimalUser(firebaseUser, "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.");
+          return;
         }
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return unsubscribe;
@@ -159,9 +162,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error('role-mismatch-customer');
         }
       }
-    } catch (err: any) {
-      // For custom thrown errors, they appear as err.message, for Firebase errors, err.code
-      const errorMessage = getErrorMessage(err.message === 'role-mismatch-business' || err.message === 'role-mismatch-customer' ? err.message : err.code);
+    } catch (err: unknown) {
+      const errorCode = err instanceof Error && (err as any).code 
+        ? (err as any).code 
+        : 'unknown';
+      const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -182,21 +187,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       let assignedBusinessId: string | undefined = undefined;
 
-      // If business registration (admin), create a business document first
       if (role === 'admin' && businessName) {
-        const newBusinessRef = doc(db, COLLECTIONS.BUSINESSES, newUser.uid); // Using uid as business id for simplicity initially, or auto-generate
+        const newBusinessRef = doc(db, COLLECTIONS.BUSINESSES, newUser.uid);
         const businessData: BusinessData = {
           name: businessName,
           email: email,
           phone: phone || '',
           slug: businessName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
           ownerId: newUser.uid,
-          isActive: true, // Auto-active for now
+          isActive: true,
           onboardingCompleted: false,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           settings: {
-            slotDuration: 30, // Default 30 mins
+            slotDuration: 30,
             currency: 'TRY',
             timezone: 'Europe/Istanbul',
           }
@@ -219,7 +223,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await setDoc(doc(db, COLLECTIONS.USERS, newUser.uid), userData);
 
-      // Update local state early for better UX before re-auth triggers fully
       setUser(prev => prev ? {
         ...prev,
         ...userData,
@@ -227,8 +230,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: role as 'admin' | 'staff' | 'customer'
       } : null);
 
-    } catch (err: any) {
-      const errorMessage = getErrorMessage(err.code);
+    } catch (err: unknown) {
+      const errorCode = err instanceof Error && (err as any).code 
+        ? (err as any).code 
+        : 'unknown';
+      const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -238,8 +244,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       await signOut(auth);
-    } catch (err: any) {
-      const errorMessage = getErrorMessage(err.code);
+    } catch (err: unknown) {
+      const errorCode = err instanceof Error && (err as any).code 
+        ? (err as any).code 
+        : 'unknown';
+      const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -249,8 +258,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       await sendPasswordResetEmail(auth, email);
-    } catch (err: any) {
-      const errorMessage = getErrorMessage(err.code);
+    } catch (err: unknown) {
+      const errorCode = err instanceof Error && (err as any).code 
+        ? (err as any).code 
+        : 'unknown';
+      const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -272,13 +284,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Update Firestore user document
       const userRef = doc(db, COLLECTIONS.USERS, user.uid);
-      const updateData = {
+      const updateData: Partial<User> & { updatedAt: FieldValue } = {
         ...data,
         updatedAt: serverTimestamp()
       };
 
       // Remove any fields that shouldn't be updated directly via this method, like uid or role
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (updateData as any).uid;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (updateData as any).role;
 
       await setDoc(userRef, updateData, { merge: true });
@@ -286,9 +300,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update local state
       setUser((prev) => prev ? { ...prev, ...data } : null);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating profile:', err);
-      const errorMessage = err.code ? getErrorMessage(err.code) : 'Profil güncellenirken bir hata oluştu.';
+      const errorMessage = err instanceof Error && (err as any).code 
+        ? getErrorMessage((err as any).code) 
+        : 'Profil güncellenirken bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }

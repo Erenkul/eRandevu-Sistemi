@@ -110,6 +110,7 @@ export const OnboardingWizard: React.FC = () => {
 
     // Step 3: Business Type & Services
     const [selectedBusinessType, setSelectedBusinessType] = useState<string | null>(null);
+    const [availableServices, setAvailableServices] = useState<ServiceTemplate[]>([]);
     const [selectedServices, setSelectedServices] = useState<ServiceTemplate[]>([]);
 
     // Step 4: Staff
@@ -140,6 +141,7 @@ export const OnboardingWizard: React.FC = () => {
         setSelectedBusinessType(typeKey);
         const template = SERVICE_TEMPLATES[typeKey];
         if (template) {
+            setAvailableServices(template.services);
             setSelectedServices(template.services);
         }
     };
@@ -472,21 +474,35 @@ export const OnboardingWizard: React.FC = () => {
                 })}
             </div>
 
-            {selectedBusinessType && selectedServices.length > 0 && (
+            {selectedBusinessType && availableServices.length > 0 && (
                 <div className="services-preview">
                     <h4>
                         <Check size={16} />
-                        Eklenecek Hizmetler ({selectedServices.length})
+                        Eklenecek Hizmetler ({selectedServices.length}/{availableServices.length})
                     </h4>
-                    <div className="service-tags">
-                        {selectedServices.map((service, index) => (
-                            <div key={index} className="service-tag" onClick={() => toggleService(service)}>
-                                <span>{service.name}</span>
-                                <span className="service-tag-price">₺{service.price}</span>
-                                <span className="service-tag-duration">{service.duration}dk</span>
-                            </div>
-                        ))}
-                    </div>
+                    <ul className="service-list">
+                        {availableServices.map((service, index) => {
+                            const isSelected = selectedServices.some(s => s.name === service.name);
+                            return (
+                                <li
+                                    key={index}
+                                    className={`service-list-item ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => toggleService(service)}
+                                >
+                                    <div className="service-check-icon">
+                                        {isSelected && <Check size={13} />}
+                                    </div>
+                                    <div className="service-info">
+                                        <span className="service-item-name">{service.name}</span>
+                                    </div>
+                                    <div className="service-meta">
+                                        <span className="service-tag-price">₺{service.price}</span>
+                                        <span className="service-tag-duration">{service.duration}dk</span>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
                 </div>
             )}
         </>

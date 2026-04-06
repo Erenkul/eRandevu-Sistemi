@@ -257,6 +257,7 @@ export const StaffPage: React.FC = () => {
                                     value={formData.phone || ''}
                                     onChange={e => setFormData({ ...formData, phone: formatStaffPhone(e.target.value) })}
                                     placeholder="5XX XXX XX XX"
+                                    maxLength={13}
                                 />
                                 {formData.phone && !validateStaffPhone(formData.phone) && (
                                     <span style={{ color: 'red', fontSize: '12px' }}>* Lütfen geçerli bir format girin (5XX XXX XX XX)</span>

@@ -10,6 +10,7 @@ import {
     LogOut,
 } from 'lucide-react';
 import { Logo } from '../ui';
+import { useAuth } from '../../contexts/AuthContext';
 import './AdminSidebar.css';
 
 interface NavItem {
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
 export const AdminSidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout } = useAuth();
 
     const isActive = (path: string) => {
         if (path === '/admin') {
@@ -37,6 +39,20 @@ export const AdminSidebar: React.FC = () => {
         }
         return location.pathname.startsWith(path);
     };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            navigate('/login');
+        }
+    };
+
+    const displayName = user?.displayName || 'Kullanıcı';
+    const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    const displayRole = user?.role === 'admin' ? 'İşletme Sahibi' : 'Personel';
 
     return (
         <aside className="admin-sidebar">
@@ -59,15 +75,15 @@ export const AdminSidebar: React.FC = () => {
 
             <div className="sidebar-footer">
                 <div className="sidebar-user">
-                    <div className="sidebar-avatar">MA</div>
+                    <div className="sidebar-avatar">{initials}</div>
                     <div className="sidebar-user-info">
-                        <div className="sidebar-user-name">Mehmet Ali</div>
-                        <div className="sidebar-user-role">İşletme Sahibi</div>
+                        <div className="sidebar-user-name">{displayName}</div>
+                        <div className="sidebar-user-role">{displayRole}</div>
                     </div>
                     <button
                         className="sidebar-nav-item"
                         style={{ width: 'auto', padding: 8 }}
-                        onClick={() => navigate('/login')}
+                        onClick={handleLogout}
                     >
                         <LogOut size={18} />
                     </button>

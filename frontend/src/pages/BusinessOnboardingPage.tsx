@@ -78,7 +78,6 @@ export const BusinessOnboardingPage: React.FC = () => {
             // Better to rely on realtime listener in AuthContext if possible, 
             // but for now a simple navigation should work if we handle state update.
             navigate('/admin');
-            window.location.reload(); // Simple way to ensure context updates with new businessId
 
         } catch (err: any) {
             console.error('Error creating business:', err);

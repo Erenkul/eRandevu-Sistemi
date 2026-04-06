@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building2, User, ArrowLeft, UserCircle, Phone, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Building2, User, ArrowLeft, UserCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Input, PrimaryButton, Logo } from '../components/ui';
 import { useAuth } from '../contexts';
 import './LoginPage.css';
 
 type UserRole = 'business' | 'customer' | null;
-type AuthMode = 'select' | 'login' | 'register' | 'verify';
+type AuthMode = 'select' | 'login' | 'register';
 
 interface FormErrors {
     name?: string;
@@ -77,20 +77,7 @@ export const LoginPage: React.FC = () => {
     const [errors, setErrors] = useState<FormErrors>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-    // SMS Verification
-    const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
-    const [countdown, setCountdown] = useState(60);
-    const [canResend, setCanResend] = useState(false);
 
-    // Countdown timer for SMS resend
-    useEffect(() => {
-        if (mode === 'verify' && countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (countdown === 0) {
-            setCanResend(true);
-        }
-    }, [mode, countdown]);
 
     const handleRoleSelect = (selectedRole: UserRole) => {
         setRole(selectedRole);
@@ -98,10 +85,7 @@ export const LoginPage: React.FC = () => {
     };
 
     const handleBack = () => {
-        if (mode === 'verify') {
-            setMode('register');
-            setVerificationCode(['', '', '', '', '', '']);
-        } else if (mode === 'login' || mode === 'register') {
+        if (mode === 'login' || mode === 'register') {
             setMode('select');
             setRole(null);
             resetForm();
@@ -305,47 +289,6 @@ export const LoginPage: React.FC = () => {
         }
     };
 
-    const handleVerificationInput = (index: number, value: string) => {
-        if (!/^\d*$/.test(value)) return;
-
-        const newCode = [...verificationCode];
-        newCode[index] = value.slice(-1);
-        setVerificationCode(newCode);
-
-        // Auto-focus next input
-        if (value && index < 5) {
-            const nextInput = document.getElementById(`otp-${index + 1}`);
-            nextInput?.focus();
-        }
-    };
-
-    const handleVerificationKeyDown = (index: number, e: React.KeyboardEvent) => {
-        if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
-            const prevInput = document.getElementById(`otp-${index - 1}`);
-            prevInput?.focus();
-        }
-    };
-
-    const handleVerifyCode = () => {
-        const code = verificationCode.join('');
-        if (code.length === 6) {
-            // In real app, verify the code with backend
-            // For demo, accept any 6-digit code
-            if (role === 'business') {
-                navigate('/admin');
-            } else {
-                navigate('/customer');
-            }
-        }
-    };
-
-    const handleResendCode = () => {
-        setCountdown(60);
-        setCanResend(false);
-        setVerificationCode(['', '', '', '', '', '']);
-        // In real app, call API to resend SMS
-    };
-
     const switchToRegister = () => {
         setMode('register');
         clearError();
@@ -414,76 +357,6 @@ export const LoginPage: React.FC = () => {
                                 Kolayca randevu alın, geçmişinizi görün
                             </div>
                         </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // SMS Verification Screen
-    if (mode === 'verify') {
-        const maskedPhone = phone.replace(/(\d{4})\s(\d{3})\s(\d{2})\s(\d{2})/, '$1 *** ** $4');
-
-        return (
-            <div className="auth-page">
-                <div className="auth-container">
-                    <button className="auth-back" onClick={handleBack}>
-                        <ArrowLeft size={18} />
-                        Geri dön
-                    </button>
-
-                    <div className="auth-logo">
-                        <Logo variant="default" className="login-logo-override" />
-                    </div>
-
-                    <div className="verify-icon">
-                        <ShieldCheck size={48} />
-                    </div>
-
-                    <div className="auth-title">
-                        <h2>SMS Doğrulama</h2>
-                        <p>
-                            <strong>{maskedPhone}</strong> numarasına gönderilen 6 haneli kodu girin
-                        </p>
-                    </div>
-
-                    <div className="otp-container">
-                        {verificationCode.map((digit, index) => (
-                            <input
-                                key={index}
-                                id={`otp-${index}`}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleVerificationInput(index, e.target.value)}
-                                onKeyDown={(e) => handleVerificationKeyDown(index, e)}
-                                className="otp-input"
-                            />
-                        ))}
-                    </div>
-
-                    <div className="verify-timer">
-                        {canResend ? (
-                            <button className="resend-button" onClick={handleResendCode}>
-                                Kodu Tekrar Gönder
-                            </button>
-                        ) : (
-                            <span>Yeni kod gönderimi: <strong>{countdown}</strong> saniye</span>
-                        )}
-                    </div>
-
-                    <div className="auth-submit">
-                        <PrimaryButton
-                            onClick={handleVerifyCode}
-                            disabled={verificationCode.join('').length !== 6}
-                        >
-                            Doğrula ve Devam Et
-                        </PrimaryButton>
-                    </div>
-
-                    <div className="verify-help">
-                        <p>Kod almadınız mı? Spam klasörünüzü kontrol edin veya farklı bir numara deneyin.</p>
                     </div>
                 </div>
             </div>

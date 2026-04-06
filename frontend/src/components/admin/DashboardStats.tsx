@@ -68,8 +68,6 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ data, loading })
             iconColor: 'var(--color-primary)',
             label: "Bugünkü Randevular",
             value: loading ? '-' : data?.todayCount || 0,
-            change: 0, // Mock change for now
-            changeLabel: 'vs dün',
         },
         {
             icon: <Users size={24} />,
@@ -77,26 +75,20 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ data, loading })
             iconColor: 'var(--color-secondary)',
             label: 'Toplam Müşteriler',
             value: loading ? '-' : data?.totalCustomers || 0,
-            change: 0, // Mock
-            changeLabel: 'bu ay',
         },
         {
             icon: <TrendingUp size={24} />,
             iconBg: 'var(--color-accent-container)',
             iconColor: 'var(--color-accent)',
-            label: 'Bugünkü Ciro', // Changed from Monthly to Today's
+            label: 'Bugünkü Ciro',
             value: loading ? '-' : `₺${data?.todayRevenue || 0}`,
-            change: 0, // Mock
-            changeLabel: 'vs dün',
         },
         {
             icon: <Clock size={24} />,
             iconBg: 'var(--color-warning-light)',
             iconColor: 'var(--color-warning)',
-            label: 'Bekleyen Randevular', // Changed from Wait Time to Pending Appts
+            label: 'Bekleyen Randevular',
             value: loading ? '-' : data?.pendingCount || 0,
-            change: 0, // Mock
-            changeLabel: 'aktif',
         },
     ];
 

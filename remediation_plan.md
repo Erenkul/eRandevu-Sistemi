@@ -16,7 +16,7 @@ The eRandevu project requires significant remediation across 6 major areas:
 | **Security** | 27 vulnerabilities (19 Critical) | Zero critical vulnerabilities, GDPR compliant | **CRITICAL** | ✅ 10/11 done — C5 pending manual action, H3 deferred |
 | **Frontend** | Code quality 6.6/10, massive files | Clean architecture, 80% test coverage | **HIGH** | ⏳ Pending |
 | **Backend** | Code won't compile, broken features | Production-ready Cloud Functions | **CRITICAL** | ✅ Code ready, awaiting Blaze plan |
-| **Testing** | 17% coverage, no CI/CD | 80%+ coverage, full automation | **HIGH** | ⏳ Pending |
+| **Testing** | 17% coverage, no CI/CD | 80%+ coverage, full automation | **HIGH** | 🔄 In Progress — 35% lines, 162 tests, hooks + service layer done |
 | **UX/Performance** | 6.5/10, slow initial load | Lighthouse 85+, fast UX | **MEDIUM** | ⏳ Pending |
 | **Known Bugs** | 5 verified bugs + 1 new | All bugs fixed | **HIGH** | ✅ All 6 bugs fixed (including AuthContext loading bug) |
 
@@ -1887,9 +1887,14 @@ const useReducedMotion = () => {
 - ❌ Zero duplicate hooks (Section 2.1 — not started)
 
 ### Testing
-- ❌ 80%+ coverage for business logic (Phase 2 — not started)
+- ✅ Testing infrastructure: Vitest + MSW v2 + coverage configured
+- ✅ CI/CD pipeline (GitHub Actions: lint → test → coverage → build)
+- ✅ All data hooks tested: 14 hook test files, 133 tests, 100% line coverage on hooks
+- ✅ Firestore service layer tested: 29 tests covering all service functions (getBusiness, getServices, getStaff, getAppointments, getTodayAppointments, getCustomers, getAvailableSlots, subscribeToAppointments, updateAppointmentStatus, etc.)
+- ✅ Overall coverage: 35% lines / 21% branches (up from 17%) — thresholds enforced in CI
+- ✅ Total: 162 tests passing across 26 test files
+- ❌ 80%+ coverage for business logic (next: component tests — pages, booking flow)
 - ❌ 100% coverage for booking flow (Phase 3 — not started)
-- ❌ CI/CD pipeline running (Phase 1 — not started)
 - ❌ All critical paths tested (Phase 3/4 — not started)
 
 ### Performance
