@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, MapPin, Phone, Globe, AlertCircle } from 'lucide-react';
-import { Input, PrimaryButton } from '../components/ui';
+import { Input, PrimaryButton, Logo } from '../components/ui';
 import { useAuth } from '../contexts';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
@@ -92,7 +92,7 @@ export const BusinessOnboardingPage: React.FC = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-logo">
-                    <h1>e<span>Randevu</span></h1>
+                    <Logo variant="default" className="login-logo-override" />
                     <p style={{ marginTop: '10px', color: '#666' }}>İşletme Kurulumu</p>
                 </div>
 

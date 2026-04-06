@@ -47,7 +47,7 @@ export const SchedulePage: React.FC = () => {
         const targetDateStr = currentDate.toDateString();
 
         return realAppointments.filter(apt => {
-            const aptDate = apt.dateTime.toDate();
+            const aptDate = apt.dateTime?.toDate?.() || new Date(apt.dateTime as any);
             return aptDate.toDateString() === targetDateStr && apt.status !== 'cancelled' && apt.status !== 'noShow';
         });
     }, [realAppointments, currentDate]);
@@ -56,7 +56,7 @@ export const SchedulePage: React.FC = () => {
         return dayAppointments.find(apt => {
             if (apt.staffId !== staffId) return false;
 
-            const aptDate = apt.dateTime.toDate();
+            const aptDate = apt.dateTime?.toDate?.() || new Date(apt.dateTime as any);
             const aptTime = aptDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
             // Simple direct match for start time
@@ -176,9 +176,16 @@ export const SchedulePage: React.FC = () => {
                         <div className="schedule-grid">
                             <div className="schedule-header">
                                 <div className="time-column-header">Saat</div>
-                                {staffList.map(staff => (
+                                {(staffList || []).map(staff => (
                                     <div key={staff.id} className="staff-column-header">
-                                        {staff.name}
+                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-surface-variant)', margin: '0 auto 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid var(--color-outline)' }}>
+                                            {staff.avatarUrl ? (
+                                                <img src={staff.avatarUrl} alt={staff.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <span style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--color-primary)' }}>{staff.name?.charAt(0) || '?'}</span>
+                                            )}
+                                        </div>
+                                        <div>{staff.name}</div>
                                     </div>
                                 ))}
                             </div>
@@ -187,7 +194,7 @@ export const SchedulePage: React.FC = () => {
                                 {timeSlots.map(time => (
                                     <div key={time} className="time-row">
                                         <div className="time-cell">{time}</div>
-                                        {staffList.map(staff => {
+                                        {(staffList || []).map(staff => {
                                             const appointment = getAppointmentForSlot(time, staff.id);
                                             return (
                                                 <div key={`${time}-${staff.id}`} className="schedule-cell">
@@ -196,11 +203,7 @@ export const SchedulePage: React.FC = () => {
                                                             className="appointment-block"
                                                             style={{
                                                                 borderLeftColor: getStatusColor(appointment.status),
-                                                                // Calculate height based on duration. Assuming 30min slots = 48px height approx.
-                                                                // If duration is 60, height should be double. 
-                                                                // But this implementation assumes strict slot placement. 
-                                                                // For now, let's keep it simple or expand if duration > 30.
-                                                                height: `${Math.max(48, (appointment.totalDurationMinutes / 30) * 48 - 4)}px`,
+                                                                height: `${Math.max(48, ((appointment.totalDurationMinutes || 30) / 30) * 48 - 4)}px`,
                                                                 zIndex: 10,
                                                                 position: 'absolute',
                                                                 width: '90%',
@@ -210,15 +213,15 @@ export const SchedulePage: React.FC = () => {
                                                         >
                                                             <div className="appointment-time">
                                                                 <Clock size={12} />
-                                                                {time} ({appointment.totalDurationMinutes} dk)
+                                                                {time} ({appointment.totalDurationMinutes || 0} dk)
                                                             </div>
                                                             <div className="appointment-client">
                                                                 <User size={12} />
-                                                                {appointment.customerName}
+                                                                {appointment.customerName || 'İsimsiz'}
                                                             </div>
                                                             <div className="appointment-service">
                                                                 <Scissors size={12} />
-                                                                {appointment.services.map(s => s.serviceName).join(', ')}
+                                                                {(appointment.services || []).map(s => s?.serviceName || 'Hizmet').join(', ')}
                                                             </div>
                                                         </div>
                                                     )}
@@ -262,7 +265,7 @@ export const SchedulePage: React.FC = () => {
                                 </div>
                                 <div className="detail-item">
                                     <label>Hizmetler</label>
-                                    <span>{selectedAppointment.services.map(s => s.serviceName).join(', ')}</span>
+                                    <span>{(selectedAppointment.services || []).map(s => s.serviceName).join(', ')}</span>
                                 </div>
                                 <div className="detail-item">
                                     <label>Personel</label>
@@ -275,8 +278,17 @@ export const SchedulePage: React.FC = () => {
                                 <div className="detail-item">
                                     <label>Tarih & Saat</label>
                                     <span>
-                                        {selectedAppointment.dateTime.toDate().toLocaleDateString('tr-TR')} -
-                                        {selectedAppointment.dateTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                        {(selectedAppointment.dateTime?.toDate?.() || new Date(selectedAppointment.dateTime as any)).toLocaleDateString('tr-TR', {
+                                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                                        })}
+                                    </span>
+                                </div>
+                                <div className="detail-item">
+                                    <label>Saat</label>
+                                    <span>
+                                        {(selectedAppointment.dateTime?.toDate?.() || new Date(selectedAppointment.dateTime as any)).toLocaleTimeString('tr-TR', {
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
                                     </span>
                                 </div>
                                 <div className="detail-item">

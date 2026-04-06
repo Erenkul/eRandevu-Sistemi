@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, ArrowLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts';
-import { SecondaryButton } from '../ui';
+import { SecondaryButton, Logo } from '../ui';
 import './BookingHeader.css';
 
 interface BookingHeaderProps {
@@ -37,8 +37,8 @@ export const BookingHeader: React.FC<BookingHeaderProps> = ({ currentStep, busin
                             <ArrowLeft size={20} />
                         </button>
                     )}
-                    <div className="booking-logo">
-                        e<span>Randevu</span>
+                    <div className="booking-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+                        <Logo variant="compact" />
                     </div>
                     {businessName && (
                         <div className="booking-business-name">
@@ -73,7 +73,7 @@ export const BookingHeader: React.FC<BookingHeaderProps> = ({ currentStep, busin
                 <div className="booking-header-right" style={{ marginLeft: '20px', display: 'flex', alignItems: 'center' }}>
                     {user && (
                         <SecondaryButton icon={User} onClick={handleDashboard} style={{ background: '#f3f4f6' }}>
-                            Panelime Dön
+                            Sayfama Dön
                         </SecondaryButton>
                     )}
                 </div>

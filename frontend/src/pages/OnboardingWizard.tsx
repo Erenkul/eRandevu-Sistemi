@@ -29,6 +29,7 @@ import {
     type ServiceTemplate,
 } from '../data/serviceTemplates';
 import './OnboardingWizard.css';
+import { Logo } from '../components/ui';
 
 // Step definitions
 const STEPS = [
@@ -368,14 +369,20 @@ export const OnboardingWizard: React.FC = () => {
                         value={businessInfo.city}
                         onChange={(e) => setBusinessInfo({ ...businessInfo, city: e.target.value })}
                     >
-                        <option value="İstanbul">İstanbul</option>
-                        <option value="Ankara">Ankara</option>
-                        <option value="İzmir">İzmir</option>
-                        <option value="Bursa">Bursa</option>
-                        <option value="Antalya">Antalya</option>
-                        <option value="Konya">Konya</option>
-                        <option value="Adana">Adana</option>
-                        <option value="Diğer">Diğer</option>
+                        <option value="">Seçiniz</option>
+                        {[
+                            'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Amasya', 'Ankara', 'Antalya', 'Artvin', 'Aydın', 'Balıkesir', 
+                            'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 
+                            'Diyarbakır', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 
+                            'Hatay', 'Isparta', 'Mersin', 'İstanbul', 'İzmir', 'Kars', 'Kastamonu', 'Kayseri', 'Kırklareli', 'Kırşehir', 
+                            'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Kahramanmaraş', 'Mardin', 'Muğla', 'Muş', 'Nevşehir', 
+                            'Niğde', 'Ordu', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas', 'Tekirdağ', 'Tokat', 
+                            'Trabzon', 'Tunceli', 'Şanlıurfa', 'Uşak', 'Van', 'Yozgat', 'Zonguldak', 'Aksaray', 'Bayburt', 'Karaman', 
+                            'Kırıkkale', 'Batman', 'Şırnak', 'Bartın', 'Ardahan', 'Iğdır', 'Yalova', 'Karabük', 'Kilis', 'Osmaniye', 
+                            'Düzce'
+                        ].map(c => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
                     </select>
                 </div>
             </div>
@@ -647,7 +654,7 @@ export const OnboardingWizard: React.FC = () => {
         <div className="onboarding-page">
             <div className="onboarding-header">
                 <div className="onboarding-logo">
-                    <h1>e<span>Randevu</span></h1>
+                    <Logo variant="default" className="login-logo-override" />
                 </div>
             </div>
 

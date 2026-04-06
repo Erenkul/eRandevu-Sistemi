@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Building2, User, ArrowLeft, UserCircle, Phone, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
-import { Input, PrimaryButton } from '../components/ui';
+import { Input, PrimaryButton, Logo } from '../components/ui';
 import { useAuth } from '../contexts';
 import './LoginPage.css';
 
@@ -380,7 +380,7 @@ export const LoginPage: React.FC = () => {
             <div className="auth-page">
                 <div className="auth-container">
                     <div className="auth-logo">
-                        <h1>e<span>Randevu</span></h1>
+                        <Logo variant="default" className="login-logo-override" />
                     </div>
 
                     <div className="auth-role-selection">
@@ -433,7 +433,7 @@ export const LoginPage: React.FC = () => {
                     </button>
 
                     <div className="auth-logo">
-                        <h1>e<span>Randevu</span></h1>
+                        <Logo variant="default" className="login-logo-override" />
                     </div>
 
                     <div className="verify-icon">
@@ -500,7 +500,7 @@ export const LoginPage: React.FC = () => {
                 </button>
 
                 <div className="auth-logo">
-                    <h1>e<span>Randevu</span></h1>
+                    <Logo variant="default" className="login-logo-override" />
                 </div>
 
 

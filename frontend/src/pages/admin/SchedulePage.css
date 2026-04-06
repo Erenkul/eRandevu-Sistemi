@@ -5,10 +5,10 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: white;
+    background: var(--color-surface);
     padding: 8px 16px;
     border-radius: 12px;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--color-outline);
 }
 
 .nav-btn {
@@ -16,8 +16,8 @@
     height: 36px;
     border-radius: 10px;
     border: none;
-    background: var(--bg-secondary, #f8fafc);
-    color: var(--text-secondary, #64748b);
+    background: var(--color-background);
+    color: var(--color-text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -26,14 +26,14 @@
 }
 
 .nav-btn:hover {
-    background: var(--primary-color, #3b82f6);
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-text-on-primary);
 }
 
 .current-date {
     font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary, #1e293b);
+    color: var(--color-text-primary);
     min-width: 240px;
     text-align: center;
 }
@@ -41,7 +41,7 @@
 /* View Toggle */
 .view-toggle {
     display: flex;
-    background: var(--bg-secondary, #f8fafc);
+    background: var(--color-background);
     border-radius: 10px;
     padding: 4px;
 }
@@ -51,7 +51,7 @@
     border-radius: 8px;
     border: none;
     background: transparent;
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -59,8 +59,8 @@
 }
 
 .view-toggle button.active {
-    background: white;
-    color: var(--text-primary, #1e293b);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -72,10 +72,10 @@
 }
 
 .summary-item {
-    background: white;
+    background: var(--color-surface);
     padding: 16px 24px;
     border-radius: 12px;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--color-outline);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -84,20 +84,20 @@
 .summary-value {
     font-size: 28px;
     font-weight: 700;
-    color: var(--text-primary, #1e293b);
+    color: var(--color-text-primary);
 }
 
 .summary-item.confirmed .summary-value {
-    color: #10b981;
+    color: var(--color-success);
 }
 
 .summary-item.pending .summary-value {
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .summary-label {
     font-size: 14px;
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
 }
 
 /* Schedule Card */
@@ -113,8 +113,8 @@
 .schedule-header {
     display: grid;
     grid-template-columns: 80px repeat(4, 1fr);
-    background: var(--bg-secondary, #f8fafc);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-outline);
 }
 
 .time-column-header,
@@ -122,12 +122,12 @@
     padding: 16px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
     text-align: center;
 }
 
 .staff-column-header {
-    border-left: 1px solid var(--border-color, #e5e7eb);
+    border-left: 1px solid var(--color-outline);
 }
 
 .schedule-body {
@@ -138,7 +138,7 @@
 .time-row {
     display: grid;
     grid-template-columns: 80px repeat(4, 1fr);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    border-bottom: 1px solid var(--color-outline);
 }
 
 .time-row:last-child {
@@ -149,9 +149,9 @@
     padding: 16px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
     text-align: center;
-    background: var(--bg-secondary, #f8fafc);
+    background: var(--color-background);
     min-height: 48px;
     display: flex;
     align-items: center;
@@ -159,7 +159,7 @@
 }
 
 .schedule-cell {
-    border-left: 1px solid var(--border-color, #e5e7eb);
+    border-left: 1px solid var(--color-outline);
     min-height: 48px;
     padding: 4px;
     position: relative;
@@ -167,7 +167,7 @@
 
 /* Appointment Block */
 .appointment-block {
-    background: white;
+    background: var(--color-surface);
     border-radius: 8px;
     padding: 8px 10px;
     border-left: 4px solid;
@@ -193,16 +193,16 @@
 }
 
 .appointment-time {
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
 }
 
 .appointment-client {
-    color: var(--text-primary, #1e293b);
+    color: var(--color-text-primary);
     font-weight: 600;
 }
 
 .appointment-service {
-    color: var(--primary-color, #3b82f6);
+    color: var(--color-primary);
 }
 
 /* Appointment Detail Modal */
@@ -223,13 +223,13 @@
 .appointment-actions {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid var(--border-color, #e5e7eb);
+    border-top: 1px solid var(--color-outline);
 }
 
 .appointment-actions h4 {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary, #1e293b);
+    color: var(--color-text-primary);
     margin: 0 0 12px 0;
 }
 
@@ -293,7 +293,7 @@
 }
 
 .detail-item {
-    background: var(--bg-secondary, #f8fafc);
+    background: var(--color-background);
     padding: 12px 16px;
     border-radius: 12px;
 }
@@ -301,14 +301,14 @@
 .detail-item label {
     display: block;
     font-size: 12px;
-    color: var(--text-secondary, #64748b);
+    color: var(--color-text-secondary);
     margin-bottom: 4px;
 }
 
 .detail-item span {
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-primary, #1e293b);
+    color: var(--color-text-primary);
 }
 
 /* Responsive */

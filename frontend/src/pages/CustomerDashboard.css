@@ -69,7 +69,7 @@
     width: 40px;
     height: 40px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent));
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -482,7 +482,7 @@
     width: 80px;
     height: 80px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent));
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
     display: flex;
     align-items: center;
     justify-content: center;

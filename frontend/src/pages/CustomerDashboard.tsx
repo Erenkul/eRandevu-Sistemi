@@ -17,9 +17,9 @@ import {
     Trash2,
     HeartOff,
 } from 'lucide-react';
-import { PrimaryButton, SecondaryButton, Input } from '../components/ui';
+import { PrimaryButton, SecondaryButton, Input, Logo, Card } from '../components/ui';
 import './CustomerDashboard.css';
-import { useAuth, useToast } from '../contexts';
+import { useAuth, useToast, useTheme } from '../contexts';
 import { useCustomerAppointments } from '../hooks';
 import { updateAppointmentStatus } from '../services/firestore';
 import type { Appointment } from '../types';
@@ -88,6 +88,7 @@ export const CustomerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout, updateUserProfile } = useAuth();
     const { showToast } = useToast();
+    const { theme, setTheme, colorPalette, setColorPalette } = useTheme();
 
     // Fetch real appointments using the user's phone number
     const { data: rawAppointments, loading: appointmentsLoading, refetch } = useCustomerAppointments(user?.phoneNumber);
@@ -181,17 +182,17 @@ export const CustomerDashboard: React.FC = () => {
 
     // Format appointment date for display
     const formatAppointmentDate = (appointment: Appointment) => {
-        const date = appointment.dateTime.toDate();
+        const date = appointment.dateTime?.toDate?.() || new Date(appointment.dateTime as any);
         return { day: date.getDate(), month: MONTHS[date.getMonth()] };
     };
 
     const formatAppointmentTime = (appointment: Appointment) => {
-        const date = appointment.dateTime.toDate();
+        const date = appointment.dateTime?.toDate?.() || new Date(appointment.dateTime as any);
         return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     };
 
     const formatFullDate = (appointment: Appointment) => {
-        const date = appointment.dateTime.toDate();
+        const date = appointment.dateTime?.toDate?.() || new Date(appointment.dateTime as any);
         const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
         const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
         return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}, ${days[date.getDay()]}`;
@@ -202,7 +203,7 @@ export const CustomerDashboard: React.FC = () => {
     const renderAppointmentCard = (appointment: Appointment, showCancel = false) => {
         const { day, month } = formatAppointmentDate(appointment);
         const time = formatAppointmentTime(appointment);
-        const serviceNames = appointment.services.map(s => s.serviceName).join(', ');
+        const serviceNames = (appointment.services || []).map(s => s.serviceName).join(', ');
         const isUpcoming = getStatusGroup(appointment.status) === 'upcoming';
 
         return (
@@ -246,8 +247,8 @@ export const CustomerDashboard: React.FC = () => {
                     <button className="customer-home-btn" onClick={handleGoHome} title="Ana Sayfaya Git">
                         <Home size={20} />
                     </button>
-                    <div className="customer-header-logo">
-                        e<span>Randevu</span>
+                    <div className="customer-header-logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
+                        <Logo variant="compact" />
                     </div>
                 </div>
 
@@ -556,6 +557,54 @@ export const CustomerDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        
+                        <Card className="customer-settings-card">
+                            <h3>Görünüm Ayarları</h3>
+                            <p className="settings-description">
+                                Tema ve görünüm tercihlerinizi özelleştirin
+                            </p>
+
+                            <div className="appearance-settings">
+                                <div className="theme-selector">
+                                    <h4>Tema</h4>
+                                    <div className="theme-options">
+                                        <button 
+                                            className={`theme-option ${theme === 'light' ? 'active' : ''}`}
+                                            onClick={() => setTheme('light')}
+                                        >
+                                            <div className="theme-preview light"></div>
+                                            <span>Açık</span>
+                                        </button>
+                                        <button 
+                                            className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
+                                            onClick={() => setTheme('dark')}
+                                        >
+                                            <div className="theme-preview dark"></div>
+                                            <span>Koyu</span>
+                                        </button>
+                                        <button 
+                                            className={`theme-option ${theme === 'auto' ? 'active' : ''}`}
+                                            onClick={() => setTheme('auto')}
+                                        >
+                                            <div className="theme-preview auto"></div>
+                                            <span>Otomatik</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="color-selector">
+                                    <h4>Renk Paleti</h4>
+                                    <div className="color-options">
+                                        <button className={`color-option ${colorPalette === '#3b82f6' ? 'active' : ''}`} onClick={() => setColorPalette('#3b82f6')} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}></button>
+                                        <button className={`color-option ${colorPalette === '#10b981' ? 'active' : ''}`} onClick={() => setColorPalette('#10b981')} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}></button>
+                                        <button className={`color-option ${colorPalette === '#8b5cf6' ? 'active' : ''}`} onClick={() => setColorPalette('#8b5cf6')} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}></button>
+                                        <button className={`color-option ${colorPalette === '#f59e0b' ? 'active' : ''}`} onClick={() => setColorPalette('#f59e0b')} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}></button>
+                                        <button className={`color-option ${colorPalette === '#ef4444' ? 'active' : ''}`} onClick={() => setColorPalette('#ef4444')} style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}></button>
+                                        <button className={`color-option ${colorPalette === '#ec4899' ? 'active' : ''}`} onClick={() => setColorPalette('#ec4899')} style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
 
                         <div className="profile-actions">
                             <SecondaryButton icon={LogOut} onClick={handleLogout}>

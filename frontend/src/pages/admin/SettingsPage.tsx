@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Save, Building, Clock, Bell, Palette } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin';
 import { Card } from '../../components/ui';
+import { useTheme } from '../../contexts';
 import './SettingsPage.css';
 
 interface BusinessSettings {
@@ -30,6 +31,7 @@ interface NotificationSettings {
 }
 
 export const SettingsPage: React.FC = () => {
+    const { theme, setTheme, colorPalette, setColorPalette } = useTheme();
     const [activeTab, setActiveTab] = useState('business');
     const [saved, setSaved] = useState(false);
 
@@ -355,15 +357,24 @@ export const SettingsPage: React.FC = () => {
                                         <div className="theme-selector">
                                             <h4>Tema</h4>
                                             <div className="theme-options">
-                                                <button className="theme-option active">
+                                                <button 
+                                                    className={`theme-option ${theme === 'light' ? 'active' : ''}`}
+                                                    onClick={() => setTheme('light')}
+                                                >
                                                     <div className="theme-preview light"></div>
                                                     <span>Açık</span>
                                                 </button>
-                                                <button className="theme-option">
+                                                <button 
+                                                    className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
+                                                    onClick={() => setTheme('dark')}
+                                                >
                                                     <div className="theme-preview dark"></div>
                                                     <span>Koyu</span>
                                                 </button>
-                                                <button className="theme-option">
+                                                <button 
+                                                    className={`theme-option ${theme === 'auto' ? 'active' : ''}`}
+                                                    onClick={() => setTheme('auto')}
+                                                >
                                                     <div className="theme-preview auto"></div>
                                                     <span>Otomatik</span>
                                                 </button>
@@ -373,12 +384,12 @@ export const SettingsPage: React.FC = () => {
                                         <div className="color-selector">
                                             <h4>Renk Paleti</h4>
                                             <div className="color-options">
-                                                <button className="color-option active" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}></button>
-                                                <button className="color-option" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}></button>
-                                                <button className="color-option" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}></button>
-                                                <button className="color-option" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}></button>
-                                                <button className="color-option" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}></button>
-                                                <button className="color-option" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#3b82f6' ? 'active' : ''}`} onClick={() => setColorPalette('#3b82f6')} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#10b981' ? 'active' : ''}`} onClick={() => setColorPalette('#10b981')} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#8b5cf6' ? 'active' : ''}`} onClick={() => setColorPalette('#8b5cf6')} style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#f59e0b' ? 'active' : ''}`} onClick={() => setColorPalette('#f59e0b')} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#ef4444' ? 'active' : ''}`} onClick={() => setColorPalette('#ef4444')} style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}></button>
+                                                <button className={`color-option ${colorPalette === '#ec4899' ? 'active' : ''}`} onClick={() => setColorPalette('#ec4899')} style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}></button>
                                             </div>
                                         </div>
                                     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
     Search,
     MapPin,
@@ -16,14 +17,26 @@ import {
     User,
     X,
     CalendarCheck,
-    CheckCircle2
+    CheckCircle2,
+    Filter
 } from 'lucide-react';
-import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { PrimaryButton, SecondaryButton, Logo } from '../components/ui';
 import { useAuth } from '../contexts';
 import './HomePage.css';
 
 import { useBusinesses, useServices } from '../hooks';
 import type { Business } from '../types';
+
+export const CITIES = [
+    "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir",
+    "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli",
+    "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari",
+    "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir",
+    "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir",
+    "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat",
+    "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman",
+    "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
+];
 
 const categories = [
     { id: 'all', name: 'Tümü', icon: Search },
@@ -67,6 +80,7 @@ export const HomePage: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchLocation, setSearchLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [activeNav, setActiveNav] = useState<ActiveNav>('home');
     const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -98,19 +112,20 @@ export const HomePage: React.FC = () => {
     };
 
     const filteredBusinesses = businesses.filter(business => {
-        // Fallback or generic category mapping if category doesn't strictly exist on Type business
-        // Real logic: Business type doesn't have a strict category string, but we can search description/name
-
         const searchLower = searchQuery.toLowerCase();
-        const matchesSearch = 
+        const locationLower = searchLocation.toLowerCase();
+
+        const matchesQuery = 
             (business.name && business.name.toLowerCase().includes(searchLower)) ||
-            (business.city && business.city.toLowerCase().includes(searchLower)) ||
             (business.address && business.address.toLowerCase().includes(searchLower));
 
-        if (selectedCategory === 'all') return matchesSearch;
+        const matchesLocation = 
+            !searchLocation || (business.city && business.city.toLowerCase().includes(locationLower));
 
-        // Simplified category filter (since we don't have explicit categories in DB yet, filtering mostly by name/desc)
-        return matchesSearch && (business.name && business.name.toLowerCase().includes(selectedCategory));
+        const matchesCategory = 
+            selectedCategory === 'all' || (business.name && business.name.toLowerCase().includes(selectedCategory));
+
+        return matchesQuery && matchesLocation && matchesCategory;
     });
 
     const dropdownResults = useMemo(() => {
@@ -159,7 +174,15 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
     };
 
     return (
-        <div key={business.id} className="business-card">
+        <motion.div 
+            key={business.id} 
+            className="business-card interactive"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            whileHover={{ y: -8, scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
             <div className="business-card-header">
                 <div className="business-avatar">
                     {business.name.charAt(0)}
@@ -191,7 +214,7 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                     Randevu Al
                 </PrimaryButton>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -356,7 +379,7 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
             {/* Header */}
             <header className="home-header">
                 <div className="home-header-logo" onClick={() => scrollToSection('home')} style={{ cursor: 'pointer' }}>
-                    e<span>Randevu</span>
+                    <Logo variant="compact" />
                 </div>
                 <div className="home-header-nav">
                     <button
@@ -380,8 +403,8 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                 </div>
                 <div className="home-header-actions">
                     {user ? (
-                        <SecondaryButton icon={User} onClick={handleDashboard}>
-                            {user.displayName || 'Panelim'}
+                        <SecondaryButton icon={User} onClick={handleDashboard} className="interactive">
+                            {user.displayName || 'Sayfam'}
                         </SecondaryButton>
                     ) : (
                         <SecondaryButton icon={LogIn} onClick={handleLogin}>
@@ -403,29 +426,65 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                         Berber, kuaför, güzellik merkezi ve daha fazlası bir tık uzağınızda.
                     </p>
 
-                    <form className="hero-search" onSubmit={handleSearch}>
-                        <div className="search-box">
-                            <Search size={20} />
-                            <input
-                                type="text"
-                                placeholder="İşletme, hizmet veya konum ara..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            />
-                            {searchQuery && (
-                                <button type="button" className="search-clear" onClick={clearSearch}>
-                                    <X size={16} />
-                                </button>
-                            )}
+                    <motion.form 
+                        className="hero-search" 
+                        onSubmit={handleSearch}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <div className="search-box-complex">
+                            <div className="search-field interactive">
+                                <Search size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Hizmet veya işletme ara..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                />
+                            </div>
                             
+                            <div className="search-divider"></div>
+                            
+                            <div className="search-field interactive">
+                                <MapPin size={20} />
+                                <input
+                                    type="text"
+                                    list="city-list"
+                                    placeholder="Konum seç..."
+                                    value={searchLocation}
+                                    onChange={(e) => setSearchLocation(e.target.value)}
+                                />
+                                <datalist id="city-list">
+                                    {CITIES.map((city, idx) => (
+                                        <option key={idx} value={city} />
+                                    ))}
+                                </datalist>
+                            </div>
+
+                            <div className="search-divider"></div>
+
+                            <div className="search-field interactive">
+                                <Filter size={20} />
+                                <select 
+                                    value={selectedCategory} 
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="search-select"
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {isSearchFocused && dropdownResults.length > 0 && (
                                 <div className="search-dropdown">
                                     {dropdownResults.map((item) => (
                                         <div 
                                             key={item.business.id} 
-                                            className="search-dropdown-item"
+                                            className="search-dropdown-item interactive"
                                             onMouseDown={() => handleBooking(item.business.slug)}
                                         >
                                             <span className="search-dropdown-name">{item.business.name}</span>
@@ -438,10 +497,10 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                                 </div>
                             )}
                         </div>
-                        <PrimaryButton type="submit" icon={Search}>
+                        <PrimaryButton type="submit" icon={Search} className="interactive submit-search-btn">
                             Ara
                         </PrimaryButton>
-                    </form>
+                    </motion.form>
 
                     <div className="hero-stats">
                         <div className="stat">
@@ -467,14 +526,16 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                     {categories.map((category) => {
                         const Icon = category.icon;
                         return (
-                            <button
+                            <motion.button
                                 key={category.id}
-                                className={`category-item ${selectedCategory === category.id ? 'active' : ''}`}
+                                className={`category-item interactive ${selectedCategory === category.id ? 'active' : ''}`}
                                 onClick={() => setSelectedCategory(category.id)}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
                                 <Icon size={20} />
                                 <span>{category.name}</span>
-                            </button>
+                            </motion.button>
                         );
                     })}
                 </div>
@@ -569,7 +630,7 @@ const HomeBusinessCard: React.FC<{ business: Business; isOpen: boolean; onBook: 
                 <div className="footer-content">
                     <div className="footer-brand">
                         <div className="home-header-logo" onClick={() => scrollToSection('home')} style={{ cursor: 'pointer' }}>
-                            e<span>Randevu</span>
+                            <Logo variant="compact" />
                         </div>
                         <p>Türkiye'nin en kolay randevu platformu</p>
                     </div>

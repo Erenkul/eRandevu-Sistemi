@@ -9,6 +9,7 @@ import {
     Settings,
     LogOut,
 } from 'lucide-react';
+import { Logo } from '../ui';
 import './AdminSidebar.css';
 
 interface NavItem {
@@ -40,9 +41,7 @@ export const AdminSidebar: React.FC = () => {
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-logo">
-                <h1>
-                    e<span>Randevu</span>
-                </h1>
+                <Logo variant="admin" />
             </div>
 
             <nav className="sidebar-nav">
