@@ -17,9 +17,9 @@ import {
   serverTimestamp,
   Timestamp,
   onSnapshot,
+  runTransaction,
 } from 'firebase/firestore';
 import type {
-  QueryConstraint,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
@@ -79,22 +79,23 @@ export async function updateBusiness(businessId: string, data: Partial<Business>
 export async function getServices(businessId: string): Promise<Service[]> {
   const q = query(
     collection(db, COLLECTIONS.SERVICES),
-    where('businessId', '==', businessId),
-    where('isActive', '==', true),
-    orderBy('order', 'asc')
+    where('businessId', '==', businessId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+  const allServices = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+  return allServices
+    .filter(s => s.isActive)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 export async function getAllServices(businessId: string): Promise<Service[]> {
   const q = query(
     collection(db, COLLECTIONS.SERVICES),
-    where('businessId', '==', businessId),
-    orderBy('order', 'asc')
+    where('businessId', '==', businessId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+  const allServices = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service));
+  return allServices.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 export async function createService(businessId: string, data: ServiceFormData): Promise<string> {
@@ -125,11 +126,12 @@ export async function deleteService(serviceId: string): Promise<void> {
 export async function getStaff(businessId: string): Promise<Staff[]> {
   const q = query(
     collection(db, COLLECTIONS.STAFF),
-    where('businessId', '==', businessId),
-    where('isActive', '==', true)
+    where('businessId', '==', businessId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Staff));
+  return snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() } as Staff))
+    .filter(staff => staff.isActive);
 }
 
 export async function getAllStaff(businessId: string): Promise<Staff[]> {
@@ -177,28 +179,27 @@ export async function getAppointments(
     endDate?: Date;
   }
 ): Promise<Appointment[]> {
-  const constraints: QueryConstraint[] = [
-    where('businessId', '==', businessId),
-  ];
+  const queryConstraints: any[] = [where('businessId', '==', businessId)];
 
+  // NATIVE FIRESTORE FİLTRELEME (Okuma Maliyetlerini Dramatik Düşürür)
   if (filters?.staffId) {
-    constraints.push(where('staffId', '==', filters.staffId));
+    queryConstraints.push(where('staffId', '==', filters.staffId));
   }
   if (filters?.status) {
-    constraints.push(where('status', '==', filters.status));
+    queryConstraints.push(where('status', '==', filters.status));
   }
   if (filters?.startDate) {
-    constraints.push(where('dateTime', '>=', Timestamp.fromDate(filters.startDate)));
+    queryConstraints.push(where('dateTime', '>=', Timestamp.fromDate(filters.startDate)));
   }
   if (filters?.endDate) {
-    constraints.push(where('dateTime', '<=', Timestamp.fromDate(filters.endDate)));
+    queryConstraints.push(where('dateTime', '<=', Timestamp.fromDate(filters.endDate)));
   }
 
-  constraints.push(orderBy('dateTime', 'asc'));
-
-  const q = query(collection(db, COLLECTIONS.APPOINTMENTS), ...constraints);
+  const q = query(collection(db, COLLECTIONS.APPOINTMENTS), ...queryConstraints);
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+
+  const appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+  return appointments.sort((a, b) => a.dateTime.toMillis() - b.dateTime.toMillis());
 }
 
 export async function getTodayAppointments(businessId: string): Promise<Appointment[]> {
@@ -224,27 +225,90 @@ export async function createAppointment(data: BookingFormData & { businessId: st
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0);
   const totalPrice = services.reduce((sum, s) => sum + s.price, 0);
 
-  const docRef = await addDoc(collection(db, COLLECTIONS.APPOINTMENTS), {
-    businessId: data.businessId,
-    staffId: data.staffId,
-    staffName: data.staffName,
-    customerName: data.customerName,
-    customerPhone: formatPhoneNumber(data.customerPhone),
-    customerEmail: data.customerEmail || null,
-    customerNote: data.customerNote || null,
-    services,
-    dateTime: Timestamp.fromDate(data.dateTime),
-    totalDurationMinutes: totalDuration,
-    totalPrice,
-    status: 'pending',
-    whatsappReminderEnabled: true,
-    whatsappReminderSent: false,
-    smsReminderEnabled: false,
-    smsReminderSent: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  // Firestore Web SDK'sında Transaction içinde query yapılamaz.
+  // Bu yüzden çakışmaları (race condition) o güne ait tek bir "gölge" dokümanı okuyarak çözüyoruz.
+  const appointmentDate = new Date(data.dateTime);
+  const dateString = `${appointmentDate.getFullYear()}-${String(appointmentDate.getMonth() + 1).padStart(2, '0')}-${String(appointmentDate.getDate()).padStart(2, '0')}`;
+
+  const dailyScheduleRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
+  const appointmentRef = doc(collection(db, COLLECTIONS.APPOINTMENTS)); // Henüz kaydedilmeyen yeni ID
+
+  await runTransaction(db, async (transaction) => {
+    const dailyScheduleSnap = await transaction.get(dailyScheduleRef);
+    let dailyAppointments: any[] = [];
+
+    if (dailyScheduleSnap.exists()) {
+      dailyAppointments = dailyScheduleSnap.data().appointments || [];
+    }
+
+    const newStart = data.dateTime.getTime();
+    const newEnd = newStart + totalDuration * 60000;
+
+    let isConflict = false;
+
+    // Aynı personele ait o günkü tüm rezervasyonları kontrol et
+    for (const apt of dailyAppointments) {
+      const aptStart = apt.startTime;
+      const aptEnd = aptStart + apt.durationMinutes * 60000;
+
+      // Zaman aralığı kesişiyorsa (Overlap formülü)
+      if (newStart < aptEnd && newEnd > aptStart) {
+        // Gerçek randevunun durumunu Transaction içinde oku (Belki iptal edilmiştir)
+        const existingAptRef = doc(db, COLLECTIONS.APPOINTMENTS, apt.appointmentId);
+        const existingAptSnap = await transaction.get(existingAptRef);
+
+        if (existingAptSnap.exists()) {
+          const aptStatus = existingAptSnap.data().status;
+          if (aptStatus !== 'cancelled' && aptStatus !== 'noShow') {
+            isConflict = true;
+            break; // Çakışma kesinleşti
+          }
+        }
+      }
+    }
+
+    if (isConflict) {
+      throw new Error('Maalesef bu saat dilimi az önce başka bir kullanıcı tarafından rezerve edildi. Lütfen farklı bir saat seçin.');
+    }
+
+    // Çakışma yoksa yeni randevuyu gölge dokümanına (o günün programına) ekle
+    dailyAppointments.push({
+      appointmentId: appointmentRef.id,
+      startTime: newStart,
+      durationMinutes: totalDuration,
+    });
+
+    transaction.set(dailyScheduleRef, {
+      businessId: data.businessId,
+      staffId: data.staffId,
+      date: dateString,
+      appointments: dailyAppointments
+    }, { merge: true });
+
+    // Asıl randevu dokümanını oluştur
+    transaction.set(appointmentRef, {
+      businessId: data.businessId,
+      staffId: data.staffId,
+      staffName: data.staffName,
+      customerName: data.customerName,
+      customerPhone: formatPhoneNumber(data.customerPhone),
+      customerEmail: data.customerEmail || null,
+      customerNote: data.customerNote || null,
+      services,
+      dateTime: Timestamp.fromDate(data.dateTime),
+      totalDurationMinutes: totalDuration,
+      totalPrice,
+      status: 'pending',
+      whatsappReminderEnabled: true,
+      whatsappReminderSent: false,
+      smsReminderEnabled: false,
+      smsReminderSent: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   });
-  return docRef.id;
+
+  return appointmentRef.id;
 }
 
 export async function updateAppointmentStatus(
@@ -253,6 +317,35 @@ export async function updateAppointmentStatus(
   cancellationReason?: string
 ): Promise<void> {
   const docRef = doc(db, COLLECTIONS.APPOINTMENTS, appointmentId);
+
+  // İPTAL (Cancel) DURUMUNDA GÖLGE DOKÜMANDAN TEMİZLİK (ArrayRemove işlemi)
+  if (status === 'cancelled') {
+    const aptSnap = await getDoc(docRef);
+    if (aptSnap.exists()) {
+      const data = aptSnap.data();
+      const date = data.dateTime.toDate();
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const dailyRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
+
+      await runTransaction(db, async (t) => {
+        // Önce randevu tablosunu temizliyoruz
+        const updateData: any = { status, updatedAt: serverTimestamp() };
+        if (cancellationReason) updateData.cancellationReason = cancellationReason;
+        t.update(docRef, updateData);
+
+        // Sonra gölge dokümandan Array'i filtreleyerek (kaldırarak) güncelliyoruz
+        const dailySnap = await t.get(dailyRef);
+        if (dailySnap.exists()) {
+          const dailyData = dailySnap.data();
+          const filtered = (dailyData.appointments || []).filter((a: any) => a.appointmentId !== appointmentId);
+          t.update(dailyRef, { appointments: filtered });
+        }
+      });
+      return; // Transaction bittiği için alttaki standart işleme gerek yok
+    }
+  }
+
+  // İptal harici durumlar için standart güncelleme
   const updateData: Record<string, any> = {
     status,
     updatedAt: serverTimestamp(),
@@ -270,11 +363,11 @@ export async function getAppointmentsByPhone(phone: string): Promise<Appointment
   const formattedPhone = formatPhoneNumber(phone);
   const q = query(
     collection(db, COLLECTIONS.APPOINTMENTS),
-    where('customerPhone', '==', formattedPhone),
-    orderBy('dateTime', 'desc')
+    where('customerPhone', '==', formattedPhone)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+  const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+  return apps.sort((a, b) => b.dateTime.toMillis() - a.dateTime.toMillis());
 }
 
 // Real-time listener for appointments
@@ -285,18 +378,18 @@ export function subscribeToAppointments(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // REAL-TIME DİNLEME MİNİMİZASYONU (Gereksiz eski verileri akıştan çıkartır)
   const q = query(
     collection(db, COLLECTIONS.APPOINTMENTS),
     where('businessId', '==', businessId),
-    where('dateTime', '>=', Timestamp.fromDate(today)),
-    orderBy('dateTime', 'asc')
+    where('dateTime', '>=', Timestamp.fromDate(today))
   );
 
   return onSnapshot(q, (snapshot) => {
-    const appointments = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Appointment));
+    const appointments = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Appointment))
+      .sort((a, b) => a.dateTime.toMillis() - b.dateTime.toMillis());
+
     callback(appointments);
   });
 }
@@ -424,22 +517,16 @@ export async function getAvailableSlots(
 
   if (!workingHours || !workingHours.isOpen) return [];
 
-  // Get existing appointments for the day
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const appointments = await getAppointments(businessId, {
-    staffId,
-    startDate: startOfDay,
-    endDate: endOfDay,
-  });
-
-  // Filter out cancelled appointments
-  const activeAppointments = appointments.filter(
-    apt => apt.status !== 'cancelled' && apt.status !== 'noShow'
-  );
+  // MÜKEMMEL GÜVENLİK: Artık hiçbir şekilde "getAppointments" ile Müşteri Özel Verileri public çekilmiyor!
+  // Bunun yerine sadece zaman logunu tutan 'daily_schedules' gölge dokümanı kullanılıyor. (Data Leak engeli)
+  const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const dailyRef = doc(db, 'daily_schedules', `${businessId}_${staffId}_${dateString}`);
+  const dailySnap = await getDoc(dailyRef);
+  
+  let activeAppointments: any[] = [];
+  if (dailySnap.exists()) {
+    activeAppointments = dailySnap.data().appointments || [];
+  }
 
   // Calculate available slots
   const slots: string[] = [];
@@ -463,11 +550,11 @@ export async function getAvailableSlots(
       continue;
     }
 
-    // Check for conflicts
+    // Doğrudan gölge dokümanın sızdırılamaz array nesneleri üzerinde overlap kontrolü
     const hasConflict = activeAppointments.some(apt => {
-      const aptStart = apt.dateTime.toDate();
-      const aptEnd = new Date(aptStart.getTime() + apt.totalDurationMinutes * 60000);
-      return currentTime < aptEnd && slotEnd > aptStart;
+      const aptStart = apt.startTime;
+      const aptEnd = aptStart + apt.durationMinutes * 60000;
+      return currentTime.getTime() < aptEnd && slotEnd.getTime() > aptStart;
     });
 
     if (!hasConflict) {

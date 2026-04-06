@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getServices } from '../services/firestore';
+import { getServices, getAllServices } from '../services/firestore';
 import type { Service } from '../types';
 
 interface UseServicesResult {
@@ -9,7 +9,7 @@ interface UseServicesResult {
     refetch: () => void;
 }
 
-export function useServices(businessId: string | undefined): UseServicesResult {
+export function useServices(businessId: string | undefined, includeInactive = false): UseServicesResult {
     const [data, setData] = useState<Service[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,9 @@ export function useServices(businessId: string | undefined): UseServicesResult {
         setLoading(true);
         setError(null);
 
-        getServices(businessId)
+        const fetchFn = includeInactive ? getAllServices : getServices;
+
+        fetchFn(businessId)
             .then((services) => {
                 if (!cancelled) setData(services);
             })
@@ -37,7 +39,7 @@ export function useServices(businessId: string | undefined): UseServicesResult {
             });
 
         return () => { cancelled = true; };
-    }, [businessId, tick]);
+    }, [businessId, includeInactive, tick]);
 
     const refetch = () => setTick(t => t + 1);
 

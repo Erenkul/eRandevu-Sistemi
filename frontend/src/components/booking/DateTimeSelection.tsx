@@ -88,8 +88,24 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 
         availableSlots.forEach(iso => {
             const date = new Date(iso);
-            const hour = date.getHours();
-            const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            
+            // Sabit Timezone ile saat hesaplama - Cihazın saati ne olursa olsun Türkiye/İstanbul baz alınır
+            const hourFormatter = new Intl.DateTimeFormat('tr-TR', {
+                hour: 'numeric',
+                hour12: false,
+                timeZone: 'Europe/Istanbul'
+            });
+            // HATA AVI (BUG HUNT): Farklı tarayıcılar "09", "9 AM" veya "ö.ö. 9" formatında dönebilir!
+            // NaN hatasını engellemek için sadece rakamları süzen Regex ekledik.
+            const formattedStr = hourFormatter.format(date);
+            const numMatch = formattedStr.match(/\d+/);
+            const hour = numMatch ? parseInt(numMatch[0], 10) : date.getHours();
+            
+            const timeStr = date.toLocaleTimeString('tr-TR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'Europe/Istanbul' 
+            });
 
             const slot = { display: timeStr, iso };
 
