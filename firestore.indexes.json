@@ -1,0 +1,51 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "businessId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "customerPhone",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reminderSent24h",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reminderSent2h",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { WHATSAPP_CONFIG } from '../config/constants';
-import { WhatsAppMessage, BookingData, MessageType } from '../types/whatsapp.types';
+import { WHATSAPP_CONFIG, WHATSAPP_TEMPLATE_NAMES, WHATSAPP_LANGUAGE } from '../config/constants';
+import { WhatsAppMessage, BookingData } from '../types/whatsapp.types';
 
 export class WhatsAppService {
   private static instance: WhatsAppService;
@@ -21,7 +21,7 @@ export class WhatsAppService {
     return WhatsAppService.instance;
   }
 
-  async sendMessage(to: string, message: WhatsAppMessage): Promise<boolean> {
+  async sendMessage(message: WhatsAppMessage): Promise<boolean> {
     try {
       const url = `${this.apiUrl}/${this.phoneNumberId}/messages`;
       
@@ -29,7 +29,6 @@ export class WhatsAppService {
         url,
         {
           messaging_product: 'whatsapp',
-          to: to,
           ...message,
         },
         {
@@ -53,8 +52,8 @@ export class WhatsAppService {
       to: data.customerPhone,
       type: 'template',
       template: {
-        name: 'booking_confirmation',
-        language: { code: 'tr' },
+        name: WHATSAPP_TEMPLATE_NAMES.BOOKING_CONFIRMATION,
+        language: { code: WHATSAPP_LANGUAGE },
         components: [
           {
             type: 'body',
@@ -70,7 +69,7 @@ export class WhatsAppService {
       },
     };
 
-    return this.sendMessage(data.customerPhone, message);
+    return this.sendMessage(message);
   }
 
   async send24HourReminder(data: BookingData): Promise<boolean> {
@@ -78,8 +77,8 @@ export class WhatsAppService {
       to: data.customerPhone,
       type: 'template',
       template: {
-        name: 'reminder_24h',
-        language: { code: 'tr' },
+        name: WHATSAPP_TEMPLATE_NAMES.REMINDER_24H,
+        language: { code: WHATSAPP_LANGUAGE },
         components: [
           {
             type: 'body',
@@ -94,7 +93,7 @@ export class WhatsAppService {
       },
     };
 
-    return this.sendMessage(data.customerPhone, message);
+    return this.sendMessage(message);
   }
 
   async send2HourReminder(data: BookingData): Promise<boolean> {
@@ -102,8 +101,8 @@ export class WhatsAppService {
       to: data.customerPhone,
       type: 'template',
       template: {
-        name: 'reminder_2h',
-        language: { code: 'tr' },
+        name: WHATSAPP_TEMPLATE_NAMES.REMINDER_2H,
+        language: { code: WHATSAPP_LANGUAGE },
         components: [
           {
             type: 'body',
@@ -117,7 +116,7 @@ export class WhatsAppService {
       },
     };
 
-    return this.sendMessage(data.customerPhone, message);
+    return this.sendMessage(message);
   }
 
   async sendCancellationNotice(data: BookingData): Promise<boolean> {
@@ -125,8 +124,8 @@ export class WhatsAppService {
       to: data.customerPhone,
       type: 'template',
       template: {
-        name: 'cancellation_notice',
-        language: { code: 'tr' },
+        name: WHATSAPP_TEMPLATE_NAMES.CANCELLATION,
+        language: { code: WHATSAPP_LANGUAGE },
         components: [
           {
             type: 'body',
@@ -141,6 +140,6 @@ export class WhatsAppService {
       },
     };
 
-    return this.sendMessage(data.customerPhone, message);
+    return this.sendMessage(message);
   }
 }

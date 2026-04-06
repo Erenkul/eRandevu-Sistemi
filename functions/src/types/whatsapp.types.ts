@@ -20,6 +20,7 @@ export interface WhatsAppMessage {
 }
 
 export interface BookingData {
+  appointmentId?: string;
   customerName: string;
   customerPhone: string;
   serviceName: string;
