@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db, COLLECTIONS } from '../../lib/firebase';
-import { useAuth } from '../../contexts';
-import { createService, createStaff } from '../../services/firestore';
+import { db, COLLECTIONS } from '../../../lib/firebase';
+import { useAuth } from '../../../contexts';
+import { createService, createStaff } from '../../../services/firestore';
 import {
     SERVICE_TEMPLATES,
     DEFAULT_WORKING_HOURS,
     type ServiceTemplate,
-} from '../../data/serviceTemplates';
+} from '../../../data/serviceTemplates';
 
 export interface WorkingHoursData {
     [key: string]: {

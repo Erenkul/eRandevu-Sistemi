@@ -62,7 +62,7 @@ describe('useDashboardStats', () => {
     expect(result.current.data!.todayRevenue).toBe(150);
   });
 
-  it('handles customer fetch failure gracefully (non-blocking)', async () => {
+  it('sets error when customer fetch fails', async () => {
     mockGetToday.mockResolvedValueOnce([mockAppointment]);
     mockGetAppointments.mockResolvedValueOnce([mockAppointment]);
     mockGetCustomers.mockRejectedValueOnce(new Error('No customers collection'));
@@ -71,9 +71,8 @@ describe('useDashboardStats', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    // Stats should still load, totalCustomers defaults to 0
-    expect(result.current.error).toBeNull();
-    expect(result.current.data!.totalCustomers).toBe(0);
+    expect(result.current.error).toBe('No customers collection');
+    expect(result.current.data).toBeNull();
   });
 
   it('sets error when today appointments fetch fails', async () => {

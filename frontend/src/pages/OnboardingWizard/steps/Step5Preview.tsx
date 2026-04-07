@@ -1,7 +1,7 @@
 import React from 'react';
 import { Building2, Clock, Scissors, Users } from 'lucide-react';
-import { DAY_NAMES } from '../../data/serviceTemplates';
-import type { ServiceTemplate } from '../../data/serviceTemplates';
+import { DAY_NAMES } from '../../../data/serviceTemplates';
+import type { ServiceTemplate } from '../../../data/serviceTemplates';
 import type { BusinessInfoData, WorkingHoursData, StaffData } from '../hooks/useOnboardingState';
 
 interface Step5PreviewProps {

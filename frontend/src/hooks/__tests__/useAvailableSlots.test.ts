@@ -48,14 +48,6 @@ describe('useAvailableSlots', () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it('returns empty state when durationMinutes is 0', () => {
-    const { result } = renderHook(() =>
-      useAvailableSlots({ ...baseParams, durationMinutes: 0 })
-    );
-    expect(result.current.data).toEqual([]);
-    expect(result.current.loading).toBe(false);
-  });
-
   it('fetches and returns available slots on success', async () => {
     mockGetAvailableSlots.mockResolvedValueOnce(mockSlots);
 

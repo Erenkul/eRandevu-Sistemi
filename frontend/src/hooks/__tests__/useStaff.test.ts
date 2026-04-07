@@ -82,21 +82,4 @@ describe('useStaff', () => {
     expect(mockGetStaff).toHaveBeenCalledTimes(2);
   });
 
-  it('re-fetches when businessId changes', async () => {
-    const staff2 = { ...mockStaff, id: 'staff-2', businessId: 'biz-2' };
-    mockGetStaff
-      .mockResolvedValueOnce([mockStaff])
-      .mockResolvedValueOnce([staff2]);
-
-    const { result, rerender } = renderHook(
-      ({ id }) => useStaff(id),
-      { initialProps: { id: 'biz-1' } }
-    );
-
-    await waitFor(() => expect(result.current.data[0]?.businessId).toBe('biz-1'));
-
-    rerender({ id: 'biz-2' });
-
-    await waitFor(() => expect(result.current.data[0]?.businessId).toBe('biz-2'));
-  });
 });

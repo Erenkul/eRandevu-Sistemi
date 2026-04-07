@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Scissors, Sparkles, Stethoscope, Leaf, Dumbbell, Building2 } from 'lucide-react';
-import { SERVICE_TEMPLATES, type ServiceTemplate } from '../../data/serviceTemplates';
+import { SERVICE_TEMPLATES, type ServiceTemplate } from '../../../data/serviceTemplates';
 
 const BUSINESS_TYPE_ICONS: Record<string, React.ElementType> = {
     Scissors,

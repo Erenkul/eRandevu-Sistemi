@@ -9,18 +9,19 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    exclude: ['e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       exclude: [
-        'node_modules/',
-        'src/test/',
+        'node_modules/**',
+        'src/test/**',
+        'e2e/**',
         '**/*.d.ts',
         '**/*.config.*',
         'src/main.tsx',
       ],
       thresholds: {
-        // After firestore service tests: raise toward 60% target
         global: {
           branches: 21,
           functions: 26,

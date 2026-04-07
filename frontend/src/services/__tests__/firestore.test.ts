@@ -5,7 +5,7 @@ import { mockBusiness, mockService, mockStaff } from '../../test/fixtures';
 // ── Mock firebase/firestore before importing the service ──────────────────────
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => 'collection-ref'),
-  doc: vi.fn(() => 'doc-ref'),
+  doc: vi.fn((_db, _col, id) => ({ id, path: `${_col}/${id}` })),
   getDoc: vi.fn(),
   getDocs: vi.fn(),
   addDoc: vi.fn(),
@@ -59,15 +59,28 @@ import {
   subscribeToAppointments,
   getAvailableSlots,
   updateAppointmentStatus,
+  createAppointment,
+  createService,
+  updateService,
+  deleteService,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  updateBusiness,
+  createOrUpdateCustomer,
 } from '../firestore';
 
-import { getDoc, getDocs, onSnapshot, runTransaction, updateDoc } from 'firebase/firestore';
+import { getDoc, getDocs, onSnapshot, runTransaction, updateDoc, addDoc, deleteDoc, doc, collection } from 'firebase/firestore';
 
 const mockGetDoc = vi.mocked(getDoc);
 const mockGetDocs = vi.mocked(getDocs);
 const mockOnSnapshot = vi.mocked(onSnapshot);
 const mockRunTransaction = vi.mocked(runTransaction);
 const mockUpdateDoc = vi.mocked(updateDoc);
+const mockAddDoc = vi.mocked(addDoc);
+const mockDeleteDoc = vi.mocked(deleteDoc);
+const mockDoc = vi.mocked(doc);
+const mockCollection = vi.mocked(collection);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -537,5 +550,368 @@ describe('getAvailableSlots', () => {
     const slotsWithout = await getAvailableSlots('biz-1', 'staff-1', monday, 30);
 
     expect(slotsWithout.length).toBeGreaterThan(slotsWithConflict.length);
+  });
+});
+
+describe('createAppointment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.mocked(doc).mockReturnValue({ id: 'mock-appt-id', path: 'appointments/mock-appt-id' });
+  });
+
+  const baseBookingData = {
+    businessId: 'biz-1',
+    staffId: 'staff-1',
+    staffName: 'Ayşe Hanım',
+    services: [
+      { id: 'srv-1', name: 'Saç Kesimi', durationMinutes: 30, price: 150 },
+    ],
+    dateTime: new Date('2030-06-18T10:00:00Z'),
+    customerName: 'Ahmet Yılmaz',
+    customerPhone: '05551234567',
+    customerEmail: 'ahmet@example.com',
+    customerNote: 'First visit',
+  };
+
+  it('creates appointment successfully when no conflicts exist', async () => {
+    const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
+      const mockTx = {
+        get: vi.fn().mockResolvedValue({ exists: () => false }),
+        set: vi.fn(),
+        update: vi.fn(),
+      };
+      await fn(mockTx);
+    });
+    mockRunTransaction.mockImplementation(transactionMock);
+
+    const result = await createAppointment(baseBookingData);
+
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    expect(result).toBe('mock-appt-id');
+  });
+
+  it('throws conflict error when slot is already booked', async () => {
+    const existingStartTime = new Date('2030-06-18T10:00:00Z').getTime();
+    const activeAppointments = [{
+      appointmentId: 'existing-1',
+      startTime: existingStartTime,
+      durationMinutes: 30,
+    }];
+
+    const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
+      const mockTx = {
+        get: vi.fn()
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
+          .mockResolvedValueOnce({
+            exists: () => true,
+            data: () => ({ status: 'confirmed' }),
+          }),
+        set: vi.fn(),
+        update: vi.fn(),
+      };
+      await fn(mockTx);
+    });
+    mockRunTransaction.mockImplementation(transactionMock);
+
+    await expect(createAppointment(baseBookingData)).rejects.toThrow(
+      'Maalesef bu saat dilimi az önce başka bir kullanıcı tarafından rezerve edildi'
+    );
+  });
+
+  it('allows booking when conflicting appointment is cancelled', async () => {
+    const existingStartTime = new Date('2030-06-18T10:00:00Z').getTime();
+    const activeAppointments = [{
+      appointmentId: 'existing-1',
+      startTime: existingStartTime,
+      durationMinutes: 30,
+    }];
+
+    const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
+      const mockTx = {
+        get: vi.fn()
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
+          .mockResolvedValueOnce({
+            exists: () => true,
+            data: () => ({ status: 'cancelled' }),
+          }),
+        set: vi.fn(),
+        update: vi.fn(),
+      };
+      await fn(mockTx);
+    });
+    mockRunTransaction.mockImplementation(transactionMock);
+
+    const result = await createAppointment(baseBookingData);
+
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    expect(result).toBe('mock-appt-id');
+  });
+
+  it('allows booking when conflicting appointment is noShow', async () => {
+    const existingStartTime = new Date('2030-06-18T10:00:00Z').getTime();
+    const activeAppointments = [{
+      appointmentId: 'existing-1',
+      startTime: existingStartTime,
+      durationMinutes: 30,
+    }];
+
+    const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
+      const mockTx = {
+        get: vi.fn()
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
+          .mockResolvedValueOnce({
+            exists: () => true,
+            data: () => ({ status: 'noShow' }),
+          }),
+        set: vi.fn(),
+        update: vi.fn(),
+      };
+      await fn(mockTx);
+    });
+    mockRunTransaction.mockImplementation(transactionMock);
+
+    const result = await createAppointment(baseBookingData);
+
+    expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+    expect(result).toBe('mock-appt-id');
+  });
+
+  it('formats phone number when creating appointment', async () => {
+    let storedPhone = '';
+    const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
+      const mockTx = {
+        get: vi.fn().mockResolvedValue({ exists: () => false }),
+        set: vi.fn().mockImplementation((_ref, data) => {
+          if (data.customerPhone) {
+            storedPhone = data.customerPhone;
+          }
+        }),
+        update: vi.fn(),
+      };
+      await fn(mockTx);
+    });
+    mockRunTransaction.mockImplementation(transactionMock);
+
+    await createAppointment(baseBookingData);
+
+    expect(storedPhone).toBe('+905551234567');
+  });
+});
+
+describe('createService', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('adds a new service document and returns its ID', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'new-srv-id' } as any);
+
+    const result = await createService('biz-1', {
+      name: 'Saç Boyama',
+      durationMinutes: 60,
+      price: 300,
+      isActive: true,
+    });
+
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        businessId: 'biz-1',
+        name: 'Saç Boyama',
+        durationMinutes: 60,
+        price: 300,
+        isActive: true,
+        order: 0,
+        createdAt: 'server-timestamp',
+        updatedAt: 'server-timestamp',
+      })
+    );
+    expect(result).toBe('new-srv-id');
+  });
+});
+
+describe('updateService', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('updates service with new data', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined as any);
+
+    await updateService('srv-1', { name: 'Updated Name', price: 200 });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'Updated Name',
+        price: 200,
+        updatedAt: 'server-timestamp',
+      })
+    );
+  });
+});
+
+describe('deleteService', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('deletes service document', async () => {
+    mockDeleteDoc.mockResolvedValueOnce(undefined as any);
+
+    await deleteService('srv-1');
+
+    expect(mockDeleteDoc).toHaveBeenCalledWith(expect.anything());
+  });
+});
+
+describe('createStaff', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('creates staff with default working hours', async () => {
+    mockAddDoc.mockResolvedValueOnce({ id: 'new-staff-id' } as any);
+
+    const result = await createStaff('biz-1', {
+      name: 'Mehmet',
+      email: 'mehmet@salon.com',
+      role: 'barber',
+      serviceIds: ['srv-1'],
+    });
+
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        businessId: 'biz-1',
+        name: 'Mehmet',
+        email: 'mehmet@salon.com',
+        role: 'barber',
+        serviceIds: ['srv-1'],
+        isActive: true,
+        workingHours: expect.any(Object),
+        createdAt: 'server-timestamp',
+        updatedAt: 'server-timestamp',
+      })
+    );
+    expect(result).toBe('new-staff-id');
+  });
+});
+
+describe('updateStaff', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('updates staff data', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined as any);
+
+    await updateStaff('staff-1', { name: 'Updated Name' });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'Updated Name',
+        updatedAt: 'server-timestamp',
+      })
+    );
+  });
+});
+
+describe('deleteStaff', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('soft deletes staff by marking as inactive', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined as any);
+
+    await deleteStaff('staff-1');
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        isActive: false,
+        updatedAt: 'server-timestamp',
+      })
+    );
+  });
+});
+
+describe('updateBusiness', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('updates business data', async () => {
+    mockUpdateDoc.mockResolvedValueOnce(undefined as any);
+
+    await updateBusiness('biz-1', { name: 'New Salon Name', phone: '+905551234567' });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'New Salon Name',
+        phone: '+905551234567',
+        updatedAt: 'server-timestamp',
+      })
+    );
+  });
+});
+
+describe('createOrUpdateCustomer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('creates new customer when phone does not exist', async () => {
+    mockGetDocs.mockResolvedValueOnce(makeQuerySnap([]));
+    mockAddDoc.mockResolvedValueOnce({ id: 'new-cust-id' } as any);
+
+    const result = await createOrUpdateCustomer('biz-1', {
+      name: 'Yeni Müşteri',
+      phone: '05551234567',
+      email: 'new@example.com',
+    });
+
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        businessId: 'biz-1',
+        name: 'Yeni Müşteri',
+        phone: '+905551234567',
+        email: 'new@example.com',
+        whatsappOptIn: true,
+        smsOptIn: false,
+        totalAppointments: 0,
+        totalSpent: 0,
+      })
+    );
+    expect(result).toBe('new-cust-id');
+  });
+
+  it('updates existing customer when phone exists', async () => {
+    mockGetDocs.mockResolvedValueOnce(
+      makeQuerySnap([{ id: 'cust-1', data: { name: 'Eski İsim', phone: '+905551234567' } }])
+    );
+    mockUpdateDoc.mockResolvedValueOnce(undefined as any);
+
+    const result = await createOrUpdateCustomer('biz-1', {
+      name: 'Güncellenmiş İsim',
+      phone: '+905551234567',
+    });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        name: 'Güncellenmiş İsim',
+        updatedAt: 'server-timestamp',
+      })
+    );
+    expect(result).toBe('cust-1');
+  });
+
+  it('formats phone number for new customer', async () => {
+    mockGetDocs.mockResolvedValueOnce(makeQuerySnap([]));
+    mockAddDoc.mockResolvedValueOnce({ id: 'new-cust-id' } as any);
+
+    await createOrUpdateCustomer('biz-1', {
+      name: 'Test',
+      phone: '05551234567',
+    });
+
+    expect(mockAddDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phone: '+905551234567',
+      })
+    );
   });
 });

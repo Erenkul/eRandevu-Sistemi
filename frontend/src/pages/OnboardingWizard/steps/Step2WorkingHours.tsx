@@ -1,5 +1,5 @@
 import React from 'react';
-import { DAY_NAMES, TIME_OPTIONS } from '../../data/serviceTemplates';
+import { DAY_NAMES, TIME_OPTIONS } from '../../../data/serviceTemplates';
 import type { WorkingHoursData } from '../hooks/useOnboardingState';
 
 interface Step2WorkingHoursProps {

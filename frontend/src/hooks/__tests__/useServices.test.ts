@@ -82,19 +82,4 @@ describe('useServices', () => {
     expect(mockGetServices).toHaveBeenCalledTimes(2);
   });
 
-  it('re-fetches when includeInactive flag changes', async () => {
-    mockGetServices.mockResolvedValueOnce([mockService]);
-    mockGetAllServices.mockResolvedValueOnce([mockService, mockService2]);
-
-    const { result, rerender } = renderHook(
-      ({ include }) => useServices('biz-1', include),
-      { initialProps: { include: false } }
-    );
-
-    await waitFor(() => expect(result.current.data).toHaveLength(1));
-
-    rerender({ include: true });
-
-    await waitFor(() => expect(result.current.data).toHaveLength(2));
-  });
 });

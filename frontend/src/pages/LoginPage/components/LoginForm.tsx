@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Input, PrimaryButton } from '../../../components/ui';
-import { validateEmail } from '../utils/validators';
+import { validateEmail, getPasswordStrength } from '../utils/validators';
 
 interface LoginFormProps {
     email: string;
