@@ -56,13 +56,13 @@ export const AdminDashboard: React.FC = () => {
             <AdminSidebar />
 
             <main className="admin-main">
-                <header className="admin-topbar">
+                <header className="admin-topbar" role="banner">
                     <div className="topbar-title">
                         <h1>{business?.name || 'Panel'}</h1>
                         <p>Hoş geldiniz, işte bugünün özeti.</p>
                     </div>
 
-                    <IconButton icon={Bell} tooltip="Bildirimler" />
+                    <IconButton icon={Bell} tooltip="Bildirimler" aria-label="Bildirimler" />
                 </header>
 
                 <div className="admin-content">
@@ -108,7 +108,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
                         <div className="modal-header">
                             <h2>Yeni Randevu</h2>
-                            <button className="modal-close" onClick={() => setShowNewAppointmentModal(false)}><X size={20} /></button>
+                            <button className="modal-close" onClick={() => setShowNewAppointmentModal(false)} aria-label="Kapat"><X size={20} /></button>
                         </div>
                         <div className="modal-body" style={{ padding: 24 }}>
                             <p style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>

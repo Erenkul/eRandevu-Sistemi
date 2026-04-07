@@ -4,6 +4,9 @@
     border-radius: var(--radius-lg);
     padding: 24px;
     transition: all var(--transition-base);
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .card-hoverable:hover {

@@ -1,6 +1,6 @@
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useStaff } from '../useStaff';
+import { useStaff } from '../useFirestore';
 import { mockStaff } from '../../test/fixtures';
 
 vi.mock('../../services/firestore', () => ({

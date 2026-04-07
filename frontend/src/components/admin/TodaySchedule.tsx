@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, User } from 'lucide-react';
-import { Card, CardHeader } from '../ui';
+import { Card, CardHeader, SkeletonCard } from '../ui';
 import './TodaySchedule.css';
 
 // Appointment types are already defined in types/index.ts usually, but keeping local interface for now
@@ -20,7 +20,7 @@ const statusLabels: Record<string, string> = {
     completed: 'Tamamlandı'
 };
 
-export const TodaySchedule: React.FC<TodayScheduleProps> = ({ appointments = [], loading }) => {
+export const TodaySchedule = React.memo<TodayScheduleProps>(({ appointments = [], loading }) => {
 
     // Helper to format time
     const formatTime = (date: any) => {
@@ -52,7 +52,9 @@ export const TodaySchedule: React.FC<TodayScheduleProps> = ({ appointments = [],
         return (
             <Card>
                 <CardHeader title="Bugünkü Program" icon={Calendar} iconColor="var(--color-primary)" iconBgColor="var(--color-primary-container)" />
-                <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Yükleniyor...</div>
+                <div style={{ padding: '16px' }}>
+                    <SkeletonCard lines={4} />
+                </div>
             </Card>
         );
     }
@@ -100,4 +102,4 @@ export const TodaySchedule: React.FC<TodayScheduleProps> = ({ appointments = [],
             </div>
         </Card>
     );
-};
+});

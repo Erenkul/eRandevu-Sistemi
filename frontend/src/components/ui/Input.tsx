@@ -18,6 +18,7 @@ export const Input: React.FC<InputProps> = ({
     className = '',
     ...props
 }) => {
+    const { 'aria-invalid': ariaInvalid, ...restProps } = props;
     return (
         <div className={`input-wrapper ${className}`}>
             {label && <label className="input-label">{label}</label>}
@@ -29,7 +30,8 @@ export const Input: React.FC<InputProps> = ({
                 )}
                 <input
                     className={`input ${error ? 'input-error' : ''}`}
-                    {...props}
+                    aria-invalid={ariaInvalid ?? (error ? true : undefined)}
+                    {...restProps}
                 />
             </div>
             {error && <span className="input-error-message">{error}</span>}
@@ -51,12 +53,14 @@ export const Textarea: React.FC<TextareaProps> = ({
     className = '',
     ...props
 }) => {
+    const { 'aria-invalid': ariaInvalid, ...restProps } = props;
     return (
         <div className="input-wrapper">
             {label && <label className="input-label">{label}</label>}
             <textarea
                 className={`input textarea ${error ? 'input-error' : ''} ${className}`}
-                {...props}
+                aria-invalid={ariaInvalid ?? (error ? true : undefined)}
+                {...restProps}
             />
             {error && <span className="input-error-message">{error}</span>}
             {hint && !error && <span className="input-hint">{hint}</span>}
@@ -71,6 +75,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     placeholder = 'Ara...',
     ...props
 }) => {
+    const { 'aria-invalid': ariaInvalid, ...restProps } = props;
     return (
         <div className="search-input-wrapper input-with-icon">
             <span className="input-icon">
@@ -80,7 +85,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 type="search"
                 className={`input search-input ${className}`}
                 placeholder={placeholder}
-                {...props}
+                aria-invalid={ariaInvalid ?? (props.error ? true : undefined)}
+                {...restProps}
             />
         </div>
     );

@@ -128,6 +128,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                         onChange={handleChange}
                         onBlur={() => handleBlur('fullName')}
                         className={errors.fullName && touched.fullName ? 'input-error' : ''}
+                        aria-label="Ad Soyad"
+                        aria-invalid={!!(errors.fullName && touched.fullName)}
                     />
                     {errors.fullName && touched.fullName ? (
                         <span className="field-error"><AlertCircle size={14} />{errors.fullName}</span>
@@ -144,9 +146,11 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                             type="tel"
                             placeholder="5XX XXX XX XX"
                             value={formData.phone}
-                            onChange={handleChange} // Keep original handleChange, it now uses formatPhone
+                            onChange={handleChange}
                             onBlur={() => handleBlur('phone')}
                             className={errors.phone && touched.phone ? 'input-error' : ''}
+                            aria-label="Telefon"
+                            aria-invalid={!!(errors.phone && touched.phone)}
                         />
                         {errors.phone && touched.phone ? (
                             <span className="field-error"><AlertCircle size={14} />{errors.phone}</span>
@@ -165,6 +169,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                             onChange={handleChange}
                             onBlur={() => handleBlur('email')}
                             className={errors.email && touched.email ? 'input-error' : ''}
+                            aria-label="E-posta"
+                            aria-invalid={!!(errors.email && touched.email)}
                         />
                         {errors.email && touched.email ? (
                             <span className="field-error"><AlertCircle size={14} />{errors.email}</span>
@@ -183,6 +189,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({ onChange }) => {
                         value={formData.note}
                         onChange={handleChange}
                         placeholder="İşletmeye iletmek istediğiniz özel bir notunuz var mı?"
+                        aria-label="Not"
+                        aria-invalid={!!(errors.note && touched.note)}
                         style={{
                             width: '100%',
                             minHeight: '80px',

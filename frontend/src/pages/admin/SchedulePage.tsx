@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AdminSidebar } from '../../components/admin';
 import { Card } from '../../components/ui';
 import './SchedulePage.css';
-import { useAuth } from '../../contexts';
+import { useAuth, useToast } from '../../contexts';
 import { useRealtimeAppointments, useStaff, useBusiness } from '../../hooks';
 import { updateAppointmentStatus } from '../../services/firestore';
 import type { Appointment as FirestoreAppointment } from '../../types';
@@ -12,6 +12,7 @@ import type { Appointment as FirestoreAppointment } from '../../types';
 export const SchedulePage: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { showToast } = useToast();
     const businessId = user?.businessId;
 
     const { data: business } = useBusiness(businessId);
@@ -108,7 +109,7 @@ export const SchedulePage: React.FC = () => {
             closeDetailModal();
         } catch (error) {
             console.error("Durum güncellenirken hata:", error);
-            alert("Durum güncellenirken bir hata oluştu.");
+            showToast(error instanceof Error ? error.message : 'Durum güncellenirken bir hata oluştu.', 'error');
         }
     };
 

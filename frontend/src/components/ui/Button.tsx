@@ -10,7 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children?: React.ReactNode;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+export const Button = React.memo<ButtonProps>(({
     variant = 'primary',
     size = 'medium',
     icon: Icon,
@@ -33,24 +33,23 @@ export const Button: React.FC<ButtonProps> = ({
             {Icon && iconPosition === 'right' && <Icon size={18} />}
         </button>
     );
-};
+});
 
-// Convenience exports
-export const PrimaryButton: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+export const PrimaryButton = React.memo<Omit<ButtonProps, 'variant'>>((props) => (
     <Button variant="primary" {...props} />
-);
+));
 
-export const SecondaryButton: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+export const SecondaryButton = React.memo<Omit<ButtonProps, 'variant'>>((props) => (
     <Button variant="secondary" {...props} />
-);
+));
 
-export const TextButton: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+export const TextButton = React.memo<Omit<ButtonProps, 'variant'>>((props) => (
     <Button variant="text" {...props} />
-);
+));
 
-export const IconButton: React.FC<Omit<ButtonProps, 'variant' | 'children'> & { tooltip?: string }> = ({
+export const IconButton = React.memo<Omit<ButtonProps, 'variant' | 'children'> & { tooltip?: string }>(({
     tooltip,
     ...props
 }) => (
     <Button variant="icon" title={tooltip} {...props} />
-);
+));

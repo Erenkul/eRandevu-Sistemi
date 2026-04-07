@@ -60,12 +60,13 @@ export const AdminSidebar: React.FC = () => {
                 <Logo variant="admin" />
             </div>
 
-            <nav className="sidebar-nav">
+            <nav className="sidebar-nav" role="navigation" aria-label="Yönetici menüsü">
                 {navItems.map((item) => (
                     <button
                         key={item.path}
                         className={`sidebar-nav-item ${isActive(item.path) ? 'active' : ''}`}
                         onClick={() => navigate(item.path)}
+                        aria-current={isActive(item.path) ? 'page' : undefined}
                     >
                         {item.icon}
                         {item.label}
@@ -84,6 +85,7 @@ export const AdminSidebar: React.FC = () => {
                         className="sidebar-nav-item"
                         style={{ width: 'auto', padding: 8 }}
                         onClick={handleLogout}
+                        aria-label="Çıkış yap"
                     >
                         <LogOut size={18} />
                     </button>

@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, Clock, DollarSign, X } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin';
 import { Card, SearchInput } from '../../components/ui';
 import './ServicesPage.css';
-import { useAuth } from '../../contexts';
+import { useAuth, useToast } from '../../contexts';
 import { useServices } from '../../hooks';
 import { createService, updateService, deleteService } from '../../services/firestore';
 import type { Service, ServiceFormData } from '../../types';
@@ -12,6 +12,7 @@ const categories = ['Tümü', 'Saç', 'Sakal', 'Bakım', 'Kombo', 'Diğer'];
 
 export const ServicesPage: React.FC = () => {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const businessId = user?.businessId;
     const { data: services, loading, refetch: refresh } = useServices(businessId, true);
 
@@ -92,7 +93,7 @@ export const ServicesPage: React.FC = () => {
             closeModal();
         } catch (error) {
             console.error('Error saving service:', error);
-            alert('Hizmet kaydedilirken bir hata oluştu.');
+            showToast(error instanceof Error ? error.message : 'Hizmet kaydedilirken bir hata oluştu.', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -105,7 +106,7 @@ export const ServicesPage: React.FC = () => {
                 refresh();
             } catch (error) {
                 console.error('Error deleting service:', error);
-                alert('Hizmet silinirken bir hata oluştu.');
+                showToast(error instanceof Error ? error.message : 'Hizmet silinirken bir hata oluştu.', 'error');
             }
         }
     };

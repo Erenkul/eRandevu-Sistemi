@@ -93,3 +93,20 @@
     background-color: var(--color-error-light);
     color: var(--color-error);
 }
+
+@media (max-width: 640px) {
+    .schedule-item {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .schedule-time {
+        min-width: auto;
+    }
+
+    .schedule-status {
+        width: 100%;
+        text-align: center;
+    }
+}

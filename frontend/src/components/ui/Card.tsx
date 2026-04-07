@@ -10,7 +10,7 @@ interface CardProps {
     onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({
+export const Card = React.memo<CardProps>(({
     children,
     className = '',
     hoverable = false,
@@ -30,7 +30,7 @@ export const Card: React.FC<CardProps> = ({
             {children}
         </div>
     );
-};
+});
 
 interface CardHeaderProps {
     title: string;
@@ -40,7 +40,7 @@ interface CardHeaderProps {
     action?: React.ReactNode;
 }
 
-export const CardHeader: React.FC<CardHeaderProps> = ({
+export const CardHeader = React.memo<CardHeaderProps>(({
     title,
     icon: Icon,
     iconColor = 'var(--color-primary)',
@@ -60,18 +60,12 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
             {action}
         </div>
     );
-};
+});
 
-export const CardBody: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = '',
-}) => {
+export const CardBody = React.memo<{ children: React.ReactNode; className?: string }>(({ children, className = '' }) => {
     return <div className={`card-body ${className}`}>{children}</div>;
-};
+});
 
-export const CardFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = '',
-}) => {
+export const CardFooter = React.memo<{ children: React.ReactNode; className?: string }>(({ children, className = '' }) => {
     return <div className={`card-footer ${className}`}>{children}</div>;
-};
+});

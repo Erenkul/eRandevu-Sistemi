@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Users, TrendingUp, Clock, ArrowUp, ArrowDown } from 'lucide-react';
-import { Card } from '../ui';
+import { Card, SkeletonStat } from '../ui';
 import './DashboardStats.css';
 
 interface StatCardProps {
@@ -13,7 +13,7 @@ interface StatCardProps {
     changeLabel?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
+const StatCard = React.memo<StatCardProps>(({
     icon,
     iconBg,
     iconColor,
@@ -44,7 +44,7 @@ const StatCard: React.FC<StatCardProps> = ({
             </div>
         </Card>
     );
-};
+});
 
 interface DashboardStatsData {
     todayCount: number;
@@ -60,35 +60,45 @@ interface DashboardStatsProps {
     loading?: boolean;
 }
 
-export const DashboardStats: React.FC<DashboardStatsProps> = ({ data, loading }) => {
+export const DashboardStats = React.memo<DashboardStatsProps>(({ data, loading }) => {
+    if (loading) {
+        return (
+            <div className="dashboard-stats">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonStat key={i} />
+                ))}
+            </div>
+        );
+    }
+
     const stats = [
         {
             icon: <Calendar size={24} />,
             iconBg: 'var(--color-primary-container)',
             iconColor: 'var(--color-primary)',
             label: "Bugünkü Randevular",
-            value: loading ? '-' : data?.todayCount || 0,
+            value: data?.todayCount || 0,
         },
         {
             icon: <Users size={24} />,
             iconBg: 'var(--color-secondary-container)',
             iconColor: 'var(--color-secondary)',
             label: 'Toplam Müşteriler',
-            value: loading ? '-' : data?.totalCustomers || 0,
+            value: data?.totalCustomers || 0,
         },
         {
             icon: <TrendingUp size={24} />,
             iconBg: 'var(--color-accent-container)',
             iconColor: 'var(--color-accent)',
             label: 'Bugünkü Ciro',
-            value: loading ? '-' : `₺${data?.todayRevenue || 0}`,
+            value: `₺${data?.todayRevenue || 0}`,
         },
         {
             icon: <Clock size={24} />,
             iconBg: 'var(--color-warning-light)',
             iconColor: 'var(--color-warning)',
             label: 'Bekleyen Randevular',
-            value: loading ? '-' : data?.pendingCount || 0,
+            value: data?.pendingCount || 0,
         },
     ];
 
@@ -99,4 +109,4 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ data, loading })
             ))}
         </div>
     );
-};
+});

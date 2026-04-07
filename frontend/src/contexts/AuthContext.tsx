@@ -12,7 +12,8 @@ import {
   updateProfile,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, type FieldValue } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
+import { doc, getDoc, setDoc, serverTimestamp, type FieldValue, type Timestamp } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
 import type { User } from '../types';
 
@@ -35,8 +36,8 @@ export interface BusinessData {
   ownerId: string;
   isActive: boolean;
   onboardingCompleted: boolean;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: Timestamp | FieldValue;
+  updatedAt: Timestamp | FieldValue;
   settings: {
     slotDuration: number;
     currency: string;
@@ -163,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (err: unknown) {
-      const errorCode = err instanceof Error && (err as any).code 
-        ? (err as any).code 
+      const errorCode = err instanceof FirebaseError
+        ? err.code
         : 'unknown';
       const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
@@ -231,8 +232,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } : null);
 
     } catch (err: unknown) {
-      const errorCode = err instanceof Error && (err as any).code 
-        ? (err as any).code 
+      const errorCode = err instanceof FirebaseError
+        ? err.code
         : 'unknown';
       const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
@@ -245,8 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       await signOut(auth);
     } catch (err: unknown) {
-      const errorCode = err instanceof Error && (err as any).code 
-        ? (err as any).code 
+      const errorCode = err instanceof FirebaseError
+        ? err.code
         : 'unknown';
       const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
@@ -259,8 +260,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       await sendPasswordResetEmail(auth, email);
     } catch (err: unknown) {
-      const errorCode = err instanceof Error && (err as any).code 
-        ? (err as any).code 
+      const errorCode = err instanceof FirebaseError
+        ? err.code
         : 'unknown';
       const errorMessage = getErrorMessage(errorCode);
       setError(errorMessage);
@@ -289,11 +290,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatedAt: serverTimestamp()
       };
 
-      // Remove any fields that shouldn't be updated directly via this method, like uid or role
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (updateData as any).uid;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (updateData as any).role;
+      delete (updateData as Record<string, unknown>).uid;
+      delete (updateData as Record<string, unknown>).role;
 
       await setDoc(userRef, updateData, { merge: true });
 
@@ -302,8 +300,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     } catch (err: unknown) {
       console.error('Error updating profile:', err);
-      const errorMessage = err instanceof Error && (err as any).code 
-        ? getErrorMessage((err as any).code) 
+      const errorMessage = err instanceof FirebaseError
+        ? getErrorMessage(err.code)
         : 'Profil güncellenirken bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);

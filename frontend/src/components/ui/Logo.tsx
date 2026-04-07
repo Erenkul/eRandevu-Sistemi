@@ -8,7 +8,7 @@ interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({ variant = 'default', className = '' }) => {
     return (
-        <div className={`er-logo-wrapper ${variant} ${className}`}>
+        <div className={`er-logo-wrapper ${variant} ${className}`} role="img" aria-label="eRandevu logosu">
             {variant === 'default' && <div className="er-bg-glow"></div>}
             
             <div className="er-logo-inner">

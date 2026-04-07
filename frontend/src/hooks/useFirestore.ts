@@ -54,8 +54,8 @@ export function useBusiness(businessId: string | undefined): UseDataResult<Busin
       setError(null);
       const business = await getBusiness(businessId);
       setData(business);
-    } catch (err: any) {
-      setError(err.message || 'İşletme bilgileri alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'İşletme bilgileri alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,8 @@ export function useBusinessBySlug(slug: string | undefined): UseDataResult<Busin
       setError(null);
       const business = await getBusinessBySlug(slug);
       setData(business);
-    } catch (err: any) {
-      setError(err.message || 'İşletme bulunamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'İşletme bulunamadı.');
     } finally {
       setLoading(false);
     }
@@ -118,8 +118,8 @@ export function useServices(businessId: string | undefined, includeInactive = fa
         ? await getAllServices(businessId)
         : await getServices(businessId);
       setData(services);
-    } catch (err: any) {
-      setError(err.message || 'Hizmetler alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Hizmetler alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -152,8 +152,8 @@ export function useStaff(businessId: string | undefined, includeInactive = false
         ? await getAllStaff(businessId)
         : await getStaff(businessId);
       setData(staff);
-    } catch (err: any) {
-      setError(err.message || 'Personel listesi alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Personel listesi alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -194,8 +194,8 @@ export function useAppointments(
       setError(null);
       const appointments = await getAppointments(businessId, filters);
       setData(appointments);
-    } catch (err: any) {
-      setError(err.message || 'Randevular alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Randevular alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -224,8 +224,8 @@ export function useTodayAppointments(businessId: string | undefined): UseDataLis
       setError(null);
       const appointments = await getTodayAppointments(businessId);
       setData(appointments);
-    } catch (err: any) {
-      setError(err.message || 'Bugünkü randevular alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Bugünkü randevular alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -286,8 +286,8 @@ export function useCustomers(businessId: string | undefined): UseDataListResult<
       setError(null);
       const customers = await getCustomers(businessId);
       setData(customers);
-    } catch (err: any) {
-      setError(err.message || 'Müşteri listesi alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Müşteri listesi alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -330,8 +330,8 @@ export function useAvailableSlots({
       setError(null);
       const slots = await getAvailableSlots(businessId, staffId, date, durationMinutes);
       setData(slots);
-    } catch (err: any) {
-      setError(err.message || 'Müsait saatler alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Müsait saatler alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -347,10 +347,12 @@ export function useAvailableSlots({
 // ============ DASHBOARD STATS HOOK ============
 
 interface DashboardStats {
-  todayAppointments: number;
+  todayCount: number;
   todayRevenue: number;
+  weeklyCount: number;
   totalCustomers: number;
-  pendingAppointments: number;
+  pendingCount: number;
+  confirmedCount: number;
 }
 
 export function useDashboardStats(businessId: string | undefined): UseDataResult<DashboardStats> {
@@ -368,22 +370,30 @@ export function useDashboardStats(businessId: string | undefined): UseDataResult
       setLoading(true);
       setError(null);
 
-      const [todayAppts, customers] = await Promise.all([
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      const [todayAppts, weeklyAppts, customers] = await Promise.all([
         getTodayAppointments(businessId),
+        getAppointments(businessId, { startDate: weekStart, endDate: weekEnd }),
         getCustomers(businessId),
       ]);
 
-      const completedToday = todayAppts.filter(a => a.status === 'completed');
-      const pendingToday = todayAppts.filter(a => a.status === 'pending' || a.status === 'confirmed');
+      const activeToday = todayAppts.filter(a => a.status !== 'cancelled' && a.status !== 'noShow');
 
       setData({
-        todayAppointments: todayAppts.length,
-        todayRevenue: completedToday.reduce((sum, a) => sum + a.totalPrice, 0),
+        todayCount: activeToday.length,
+        todayRevenue: activeToday.reduce((sum, a) => sum + (a.totalPrice || 0), 0),
+        weeklyCount: weeklyAppts.filter(a => a.status !== 'cancelled' && a.status !== 'noShow').length,
         totalCustomers: customers.length,
-        pendingAppointments: pendingToday.length,
+        pendingCount: todayAppts.filter(a => a.status === 'pending').length,
+        confirmedCount: todayAppts.filter(a => a.status === 'confirmed').length,
       });
-    } catch (err: any) {
-      setError(err.message || 'İstatistikler alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'İstatistikler alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -415,8 +425,8 @@ export function useCustomerAppointments(phone: string | undefined): UseDataListR
       setError(null);
       const appointments = await getAppointmentsByPhone(phone);
       setData(appointments);
-    } catch (err: any) {
-      setError(err.message || 'Randevularınız alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Randevularınız alınamadı.');
     } finally {
       setLoading(false);
     }
@@ -442,8 +452,8 @@ export function useBusinesses(): UseDataListResult<Business> {
       setError(null);
       const businesses = await getAllBusinesses();
       setData(businesses);
-    } catch (err: any) {
-      setError(err.message || 'İşletmeler alınamadı.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'İşletmeler alınamadı.');
     } finally {
       setLoading(false);
     }

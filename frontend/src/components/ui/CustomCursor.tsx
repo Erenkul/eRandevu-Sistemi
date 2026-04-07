@@ -1,30 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 export const CustomCursor: React.FC = () => {
-    const [mousePosition, setMousePosition] = useState({
-        x: 0,
-        y: 0
-    });
-    
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const positionRef = useRef({ x: 0, y: 0 });
+    const rafRef = useRef<number>(0);
+
     useEffect(() => {
-        const updateMousePosition = (e: MouseEvent) => {
-            setMousePosition({
-                x: e.clientX,
-                y: e.clientY
-            });
+        const handleMouseMove = (e: MouseEvent) => {
+            positionRef.current = { x: e.clientX, y: e.clientY };
         };
 
-        window.addEventListener('mousemove', updateMousePosition);
+        const updatePosition = () => {
+            setMousePosition({ ...positionRef.current });
+            rafRef.current = requestAnimationFrame(updatePosition);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove, { passive: true });
+        rafRef.current = requestAnimationFrame(updatePosition);
 
         return () => {
-            window.removeEventListener('mousemove', updateMousePosition);
+            window.removeEventListener('mousemove', handleMouseMove);
+            cancelAnimationFrame(rafRef.current);
         };
     }, []);
 
     const trailCount = 8;
     const trailColors = [
-        'var(--color-primary)', // most visible
+        'var(--color-primary)',
         'var(--color-primary-container)',
         'var(--color-primary-light)',
         'var(--color-accent)',
@@ -37,7 +40,6 @@ export const CustomCursor: React.FC = () => {
     return (
         <div style={{ pointerEvents: 'none', zIndex: 9999, position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}>
             {Array.from({ length: trailCount }).map((_, index) => {
-                // Her bir kuyruk nesnesi mousedan biraz daha geç gelir
                 return (
                     <motion.div
                         key={index}
@@ -48,7 +50,7 @@ export const CustomCursor: React.FC = () => {
                         transition={{
                             type: "spring",
                             mass: 0.05,
-                            stiffness: 1000 - (index * 110), // arkadakiler daha geç gelir
+                            stiffness: 1000 - (index * 110),
                             damping: 30 + (index * 5)
                         }}
                         style={{

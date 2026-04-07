@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Scissors } from 'lucide-react';
-import { Card, CardHeader } from '../ui';
+import { Card, CardHeader, SkeletonCard } from '../ui';
 import { getServices } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import './PopularServices.css';
@@ -78,8 +78,8 @@ export const PopularServices: React.FC<PopularServicesProps> = ({ businessId: pr
             />
             <div className="popular-services-list">
                 {loading ? (
-                    <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                        Yükleniyor...
+                    <div style={{ padding: '16px' }}>
+                        <SkeletonCard lines={4} />
                     </div>
                 ) : services.length === 0 ? (
                     <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>

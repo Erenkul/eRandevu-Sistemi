@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useAvailableSlots } from '../useAvailableSlots';
+import { useAvailableSlots } from '../useFirestore';
 
 vi.mock('../../services/firestore', () => ({
   getAvailableSlots: vi.fn(),

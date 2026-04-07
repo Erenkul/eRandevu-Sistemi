@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, Phone, Mail, X } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin';
 import { Card, SearchInput } from '../../components/ui';
 import './StaffPage.css';
-import { useAuth } from '../../contexts';
+import { useAuth, useToast } from '../../contexts';
 import { useStaff } from '../../hooks';
 import { createStaff, updateStaff, deleteStaff } from '../../services/firestore';
 import type { Staff, StaffFormData } from '../../types';
@@ -23,6 +23,7 @@ const validateStaffPhone = (phone: string): boolean => {
 
 export const StaffPage: React.FC = () => {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const { data: staffList, loading, refetch } = useStaff(user?.businessId);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +77,7 @@ export const StaffPage: React.FC = () => {
     const handleSave = async () => {
         if (!formData.name || !user?.businessId) return;
         if (formData.phone && !validateStaffPhone(formData.phone)) {
-            alert('Lütfen geçerli bir telefon formatı girin (5XX XXX XX XX)');
+            showToast('Lütfen geçerli bir telefon formatı girin (5XX XXX XX XX)', 'error');
             return;
         }
 
@@ -93,7 +94,7 @@ export const StaffPage: React.FC = () => {
             closeModal();
         } catch (error) {
             console.error('Error saving staff:', error);
-            alert('Personel kaydedilirken bir hata oluştu.');
+            showToast(error instanceof Error ? error.message : 'Personel kaydedilirken bir hata oluştu.', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -107,7 +108,7 @@ export const StaffPage: React.FC = () => {
             refetch();
         } catch (error) {
             console.error('Error deleting staff:', error);
-            alert('Personel silinirken bir hata oluştu.');
+            showToast(error instanceof Error ? error.message : 'Personel silinirken bir hata oluştu.', 'error');
         }
     };
 
