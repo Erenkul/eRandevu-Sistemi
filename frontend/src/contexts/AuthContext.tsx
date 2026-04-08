@@ -186,50 +186,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(newUser, { displayName });
 
-      let assignedBusinessId: string | undefined = undefined;
+      try {
+        let assignedBusinessId: string | undefined = undefined;
 
-      if (role === 'admin' && businessName) {
-        const newBusinessRef = doc(db, COLLECTIONS.BUSINESSES, newUser.uid);
-        const businessData: BusinessData = {
-          name: businessName,
-          email: email,
-          phone: phone || '',
-          slug: businessName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-          ownerId: newUser.uid,
-          isActive: true,
-          onboardingCompleted: false,
+        if (role === 'admin' && businessName) {
+          const newBusinessRef = doc(db, COLLECTIONS.BUSINESSES, newUser.uid);
+          const businessData: BusinessData = {
+            name: businessName,
+            email: email,
+            phone: phone || '',
+            slug: businessName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            ownerId: newUser.uid,
+            isActive: true,
+            onboardingCompleted: false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            settings: {
+              slotDuration: 30,
+              currency: 'TRY',
+              timezone: 'Europe/Istanbul',
+            }
+          };
+          await setDoc(newBusinessRef, businessData);
+          assignedBusinessId = newBusinessRef.id;
+        }
+
+        const userData: RegisterUserData = {
+          email,
+          displayName,
+          role,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          settings: {
-            slotDuration: 30,
-            currency: 'TRY',
-            timezone: 'Europe/Istanbul',
-          }
         };
-        await setDoc(newBusinessRef, businessData);
-        assignedBusinessId = newBusinessRef.id;
+
+        if (phone) userData.phoneNumber = phone;
+        if (businessName) userData.businessName = businessName;
+        if (assignedBusinessId) userData.businessId = assignedBusinessId;
+
+        await setDoc(doc(db, COLLECTIONS.USERS, newUser.uid), userData);
+
+        setUser(prev => prev ? {
+          ...prev,
+          ...userData,
+          uid: newUser.uid,
+          role: role as 'admin' | 'staff' | 'customer'
+        } : null);
+      } catch (dbError) {
+        // If Firestore writes fail, try to clean up the Auth user to prevent orphaned unlinked accounts
+        try {
+          await newUser.delete();
+        } catch (deleteErr) {
+          console.error("Failed to clean up Firebase Auth user:", deleteErr);
+        }
+        throw dbError;
       }
-
-      const userData: RegisterUserData = {
-        email,
-        displayName,
-        role,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      if (phone) userData.phoneNumber = phone;
-      if (businessName) userData.businessName = businessName;
-      if (assignedBusinessId) userData.businessId = assignedBusinessId;
-
-      await setDoc(doc(db, COLLECTIONS.USERS, newUser.uid), userData);
-
-      setUser(prev => prev ? {
-        ...prev,
-        ...userData,
-        uid: newUser.uid,
-        role: role as 'admin' | 'staff' | 'customer'
-      } : null);
 
     } catch (err: unknown) {
       const errorCode = err instanceof FirebaseError
