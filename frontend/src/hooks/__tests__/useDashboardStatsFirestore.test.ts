@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useDashboardStats } from '../useFirestore';
-import { mockAppointment, mockAppointmentPending, mockCustomer } from '../../test/fixtures';
+import { mockAppointment, mockCustomer } from '../../test/fixtures';
 
 vi.mock('../../services/firestore', () => ({
   getTodayAppointments: vi.fn(),

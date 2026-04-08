@@ -70,7 +70,7 @@ import {
   createOrUpdateCustomer,
 } from '../firestore';
 
-import { getDoc, getDocs, onSnapshot, runTransaction, updateDoc, addDoc, deleteDoc, doc, collection } from 'firebase/firestore';
+import { getDoc, getDocs, onSnapshot, runTransaction, updateDoc, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const mockGetDoc = vi.mocked(getDoc);
 const mockGetDocs = vi.mocked(getDocs);
@@ -79,8 +79,6 @@ const mockRunTransaction = vi.mocked(runTransaction);
 const mockUpdateDoc = vi.mocked(updateDoc);
 const mockAddDoc = vi.mocked(addDoc);
 const mockDeleteDoc = vi.mocked(deleteDoc);
-const mockDoc = vi.mocked(doc);
-const mockCollection = vi.mocked(collection);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -557,7 +555,7 @@ describe('createAppointment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetAllMocks();
-    vi.mocked(doc).mockReturnValue({ id: 'mock-appt-id', path: 'appointments/mock-appt-id' });
+    vi.mocked(doc).mockReturnValue({ id: 'mock-appt-id', path: 'appointments/mock-appt-id' } as any);
   });
 
   const baseBookingData = {

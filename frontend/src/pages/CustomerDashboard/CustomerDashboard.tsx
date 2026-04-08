@@ -150,7 +150,7 @@ export const CustomerDashboard: React.FC = () => {
 
             <main className="customer-content">
                 {activeTab === 'home' && (
-                    <HomeTab user={user} upcomingAppointments={upcomingAppointments} favorites={favorites}
+                    <HomeTab user={user || undefined} upcomingAppointments={upcomingAppointments} favorites={favorites}
                         appointmentsLoading={appointmentsLoading} onNewAppointment={handleNewAppointment}
                         onTabChange={(t) => setActiveTab(t as TabType)} renderAppointmentCard={renderAppointmentCard} />
                 )}

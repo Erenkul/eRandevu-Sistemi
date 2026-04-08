@@ -1,7 +1,7 @@
 import React from 'react';
 import { Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Input } from '../../../components/ui';
-import { formatPhoneNumber } from '../utils/phoneFormatter';
+
 import { validatePhone } from '../utils/validators';
 
 interface PhoneVerificationProps {

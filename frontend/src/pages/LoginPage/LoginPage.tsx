@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { PrimaryButton, Logo } from '../../components/ui';
+import { Logo } from '../../components/ui';
 import { useAuth } from '../../contexts';
 import { RoleSelection } from './components/RoleSelection';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { formatPhoneNumber } from './utils/phoneFormatter';
 import { usePhoneValidation } from './hooks/usePhoneValidation';
+import type { AuthMode, UserRole } from './hooks/usePhoneValidation';
 import '../LoginPage.css';
-
-type UserRole = 'business' | 'customer' | null;
-type AuthMode = 'select' | 'login' | 'register';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -144,8 +142,6 @@ export const LoginPage: React.FC = () => {
                         onPasswordChange={(e) => setPassword(e.target.value)}
                         onBlur={onBlur}
                         onSubmit={handleSubmit}
-                        onSwitchToRegister={switchToRegister}
-                        onSocialLogin={() => {}}
                     />
                 ) : (
                     <RegisterForm
@@ -168,8 +164,6 @@ export const LoginPage: React.FC = () => {
                         onTermsChange={setTermsAccepted}
                         onBlur={onBlur}
                         onSubmit={handleSubmit}
-                        onSwitchToLogin={switchToLogin}
-                        onSocialLogin={() => {}}
                     />
                 )}
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, Lock, User, AlertCircle, CheckCircle, Phone } from 'lucide-react';
 import { Input, PrimaryButton } from '../../../components/ui';
-import { formatPhoneNumber } from '../utils/phoneFormatter';
+
 import { validateEmail, validatePhone, getPasswordStrength } from '../utils/validators';
 
 interface RegisterFormProps {
@@ -13,7 +13,7 @@ interface RegisterFormProps {
     confirmPassword: string;
     termsAccepted: boolean;
     role: 'business' | 'customer' | null;
-    errors: Record<string, string>;
+    errors: Record<string, string | undefined>;
     touched: Record<string, boolean>;
     onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onBusinessNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -24,8 +24,6 @@ interface RegisterFormProps {
     onTermsChange: (checked: boolean) => void;
     onBlur: (field: string) => void;
     onSubmit: (e: React.FormEvent) => void;
-    onSwitchToLogin: () => void;
-    onSocialLogin: () => void;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({
@@ -48,8 +46,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     onTermsChange,
     onBlur,
     onSubmit,
-    onSwitchToLogin,
-    onSocialLogin,
 }) => {
     const passwordStrength = getPasswordStrength(password);
 

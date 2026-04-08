@@ -1,15 +1,10 @@
 import React from 'react';
 import { Plus, Calendar, Star, Heart } from 'lucide-react';
 import { PrimaryButton } from '../../../components/ui';
-import type { Appointment, Favorite } from './CustomerDashboard';
-
-const statusLabels: Record<string, string> = {
-    upcoming: 'Yaklaşan', pending: 'Bekliyor', confirmed: 'Onaylandı',
-    inProgress: 'Devam Ediyor', completed: 'Tamamlandı', cancelled: 'İptal Edildi', noShow: 'Gelmedi',
-};
+import type { Appointment, Favorite } from '../CustomerDashboard';
 
 interface HomeTabProps {
-    user: { displayName?: string; phoneNumber?: string };
+    user?: { displayName?: string; phoneNumber?: string };
     upcomingAppointments: Appointment[];
     favorites: Favorite[];
     appointmentsLoading: boolean;

@@ -194,7 +194,7 @@ export interface DailyStats {
 
 // ============ FORM TYPES ============
 export interface BookingFormData {
-  services: Service[];
+  services: { id: string; name: string; durationMinutes: number; price: number }[];
   staffId: string;
   dateTime: Date;
   customerName: string;

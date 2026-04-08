@@ -19,7 +19,7 @@ describe('useTodayAppointments', () => {
   });
 
   it('fetches today appointments on success', async () => {
-    mockGetToday.mockResolvedValueOnce([{ id: 'apt-1', businessId: 'biz-1' }]);
+    mockGetToday.mockResolvedValueOnce([{ id: 'apt-1', businessId: 'biz-1' } as any]);
 
     const { result } = renderHook(() => useTodayAppointments('biz-1'));
 

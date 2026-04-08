@@ -1,19 +1,17 @@
 import React from 'react';
 import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Input, PrimaryButton } from '../../../components/ui';
-import { validateEmail, getPasswordStrength } from '../utils/validators';
+import { validateEmail } from '../utils/validators';
 
 interface LoginFormProps {
     email: string;
     password: string;
-    errors: Record<string, string>;
+    errors: Record<string, string | undefined>;
     touched: Record<string, boolean>;
     onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onBlur: (field: string) => void;
     onSubmit: (e: React.FormEvent) => void;
-    onSwitchToRegister: () => void;
-    onSocialLogin: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({
@@ -25,10 +23,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     onPasswordChange,
     onBlur,
     onSubmit,
-    onSwitchToRegister,
-    onSocialLogin,
 }) => {
-    const passwordStrength = getPasswordStrength(password);
 
     return (
         <form className="auth-form" onSubmit={onSubmit}>

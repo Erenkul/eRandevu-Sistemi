@@ -9,10 +9,11 @@ export interface FormErrors {
     password?: string;
     confirmPassword?: string;
     terms?: string;
+    [key: string]: string | undefined;
 }
 
-type AuthMode = 'login' | 'register';
-type UserRole = 'business' | 'customer' | null;
+export type AuthMode = 'select' | 'login' | 'register';
+export type UserRole = 'business' | 'customer' | null;
 
 export const usePhoneValidation = () => {
     const [errors, setErrors] = useState<FormErrors>({});
