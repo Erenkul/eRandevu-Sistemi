@@ -16,7 +16,7 @@ The eRandevu project requires significant remediation across 6 major areas:
 | **Security** | 27 vulnerabilities (19 Critical) | Zero critical vulnerabilities, GDPR compliant | **CRITICAL** | ✅ 10/11 done — C5 pending manual action, H3 deferred |
 | **Frontend** | Code quality 6.6/10, massive files | Clean architecture, 80% test coverage | **HIGH** | ✅ Phase 2 complete — types, error boundary, toast, hooks consolidated |
 | **Backend** | Code won't compile, broken features | Production-ready Cloud Functions | **CRITICAL** | ✅ Code ready, awaiting Blaze plan |
-| **Testing** | 17% coverage, no CI/CD | 80%+ coverage, full automation | **HIGH** | 🔄 In Progress — 35% lines, 162 tests, hooks + service layer done |
+| **Testing** | 17% coverage, no CI/CD | 80%+ coverage, full automation | **HIGH** | 🔄 In Progress — 76% lines, 261 tests (32 files), hooks + services + admin pages done |
 | **UX/Performance** | 6.5/10, slow initial load | Lighthouse 85+, fast UX | **MEDIUM** | ✅ Phase 4 complete — code splitting, skeleton screens, React.memo, ARIA accessibility, CustomCursor fix |
 | **Known Bugs** | 5 verified bugs + 1 new | All bugs fixed | **HIGH** | ✅ All 6 bugs fixed (including AuthContext loading bug) |
 
@@ -1907,13 +1907,25 @@ const useReducedMotion = () => {
 
 ---
 
-### Week 6: Testing - Components (40 hrs) ⏳ NEXT
+### Week 6: Testing - Components (40 hrs) 🔄 IN PROGRESS
 
 **Day 1-3:**
-- Booking flow component tests
+- ✅ Booking flow component tests (ServiceSelection, StaffSelection, DateTimeSelection, ContactForm, BookingSummary)
 
-**Day 4-5:**
-- Admin pages tests
+**Day 4-5:** ✅ DONE
+- ✅ Admin page tests: ServicesPage (15 tests, 91.4% line coverage), StaffPage (20 tests, 94.2%), SchedulePage (19 tests, 79%)
+
+**Test Results:**
+- 32 test files, **261 tests all passing** (up from 204)
+- Admin pages: 86.3% statements, 73% branches, 86.5% functions, 87.7% lines
+- All tests use proper `within()` queries, `BrowserRouter` wrapper, `AuthProvider` + `ToastProvider`
+
+**Still TODO:**
+- ⏳ ClientsPage tests
+- ⏳ AdminDashboard tests
+- ⏳ AuthContext expanded tests (currently 21% lines)
+- ⏳ ToastContext expanded tests (currently 30% lines)
+- ⏳ E2E tests with Playwright (Agent O)
 
 ---
 
@@ -1964,11 +1976,13 @@ const useReducedMotion = () => {
 - ✅ CI/CD pipeline (GitHub Actions: lint → test → coverage → build)
 - ✅ All data hooks tested: 14 hook test files, 133 tests, 100% line coverage on hooks
 - ✅ Firestore service layer tested: 29 tests covering all service functions (getBusiness, getServices, getStaff, getAppointments, getTodayAppointments, getCustomers, getAvailableSlots, subscribeToAppointments, updateAppointmentStatus, etc.)
-- ✅ Overall coverage: 35% lines / 21% branches (up from 17%) — thresholds enforced in CI
-- ✅ Total: 162 tests passing across 26 test files
-- ❌ 80%+ coverage for business logic (next: component tests — pages, booking flow)
+- ✅ Admin page component tests: ServicesPage (15 tests), StaffPage (20 tests), SchedulePage (19 tests) — 86-94% line coverage
+- ✅ Overall coverage: 76% lines / 61% branches (up from 17%) — thresholds enforced in CI
+- ✅ Total: 261 tests passing across 32 test files
+- 🔄 80%+ coverage for business logic (admin pages done, contexts need expansion)
 - ❌ 100% coverage for booking flow (Phase 3 — not started)
-- ❌ All critical paths tested (Phase 3/4 — not started)
+- ❌ All critical paths tested (E2E Phase 4 — not started)
+- ❌ E2E tests with Playwright (Agent O — not started)
 
 ### Performance
 - ✅ Initial bundle <300KB (code splitting with lazy()/Suspense on all route-level pages)

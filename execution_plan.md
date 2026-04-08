@@ -159,47 +159,48 @@ Tasks that **should NOT** be parallelized:
 
 ---
 
-## Phase 5: Testing Expansion (~100 hrs)
+## Phase 5: Testing Expansion (~100 hrs) — 🔄 IN PROGRESS
 
-### Agent L: Hook Tests — 25 hrs
+### Agent L: Hook Tests — ✅ DONE (25 hrs)
 **Scope:** All hooks in `useFirestore.ts`
-- Test `useAvailableSlots` (critical, 95 lines)
-- Test `useBusiness` / `useBusinessBySlug`
-- Test `useServices` / `useStaff`
-- Test `useAppointments` / `useTodayAppointments`
-- Test `useDashboardStats`, `useCustomers`, `useRealtimeAppointments`
+- ✅ 14 hook test files, 133 tests, 86.7% line coverage on hooks
+- All edge cases covered: loading states, error handling, undefined businessId, realtime subscriptions
 
-**Acceptance:** 80%+ coverage on hook layer, all edge cases covered
+**Acceptance:** ✅ 80%+ coverage on hook layer achieved
 
-### Agent M: Service Layer Tests — 30 hrs
-**Scope:** All service functions
-- Test `createAppointment` (critical, 95 lines of transactions)
-- Test `updateAppointmentStatus`
-- Test `getAvailableSlots`
-- Test CRUD for services, staff, customers
-- Test utilities (`formatPhoneNumber`, etc.)
+### Agent M: Service Layer Tests — ✅ DONE (30 hrs)
+**Scope:** All service functions in `firestore.ts`
+- ✅ 29 tests covering all service functions
+- Transaction edge cases covered (conflict detection, cancelled/noShow bypass)
+- 95.1% line coverage on services
 
-**Acceptance:** 80%+ coverage on service layer, transaction edge cases covered
+**Acceptance:** ✅ 80%+ coverage on service layer achieved
 
-### Agent N: Component Tests — 35 hrs
+### Agent N: Component Tests — 🔄 IN PROGRESS (35 hrs)
 **Scope:** Booking flow + Admin pages
-- Test BookingPage (multi-step flow)
-- Test ServiceSelection, StaffSelection, DateTimeSelection, ContactForm, BookingSummary
-- Test ServicesPage, StaffPage, SchedulePage, ClientsPage
+- ✅ Booking flow components tested (ServiceSelection, StaffSelection, DateTimeSelection, ContactForm, BookingSummary)
+- ✅ UI components tested (Button, Card, Input)
+- ✅ Auth components tested (ProtectedRoute, AuthContext)
+- ✅ Admin pages tested: ServicesPage (15 tests, 91.4%), StaffPage (20 tests, 94.2%), SchedulePage (19 tests, 79%)
+- ⏳ ClientsPage tests — not started
+- ⏳ AdminDashboard tests — not started
+- ⏳ AuthContext expanded tests (currently 21% lines)
+- ⏳ ToastContext expanded tests (currently 30% lines)
 
-**Acceptance:** 80%+ coverage on components, critical user flows tested
+**Current:** 261 tests across 32 files, all passing. Admin pages at 86-94% line coverage.
 
-### Agent O: E2E Tests — 20 hrs
+**Acceptance:** 🔄 80%+ coverage on components — partially met (booking + admin pages done, contexts pending)
+
+### Agent O: E2E Tests — ⏳ PENDING (20 hrs)
 **Scope:** Playwright test suite
-- Customer booking journey
-- Admin login & dashboard
-- Service management
-- Staff management
-- Appointment status management
+- ⏳ Playwright config setup (dependency already in package.json)
+- ⏳ Customer booking journey
+- ⏳ Admin login & dashboard
+- ⏳ Service management
+- ⏳ Staff management
+- ⏳ Appointment status management
 
-**Acceptance:** All 5 critical E2E journeys pass, CI runs them on PR
-
-> Agents L, M, N, O have **sequential dependency**: L → M → N → O (test pyramid order). However, L and M can overlap once MSW/Firebase mocks are stable.
+**Acceptance:** ⏳ All 5 critical E2E journeys pass, CI runs them on PR
 
 ---
 
@@ -225,11 +226,11 @@ Phase 4: Performance — ✅ COMPLETE
 ├── Agent J (Cursor + Skeletons) ──────── ✅ DONE (PARALLEL with I)
 └── Agent K (Responsive + A11y) ───────── ✅ DONE (after J)
 
-Phase 5: Testing
-├── Agent L (Hook Tests) ────────────────┐
-├── Agent M (Service Tests) ─────────────┤  L starts first, M overlaps
-├── Agent N (Component Tests) ───────────┤  AFTER L+M stable
-└── Agent O (E2E Tests) ───────────────── AFTER N
+Phase 5: Testing — 🔄 IN PROGRESS
+├── Agent L (Hook Tests) ────────────────── ✅ DONE (86.7% lines)
+├── Agent M (Service Tests) ─────────────── ✅ DONE (95.1% lines)
+├── Agent N (Component Tests) ───────────── 🔄 IN PROGRESS (admin pages done, contexts pending)
+└── Agent O (E2E Tests) ─────────────────── ⏳ PENDING
 ```
 
 ---
@@ -241,7 +242,7 @@ Phase 5: Testing
 | ~~**Sprint 1**~~ | ~~C → D, E~~ | ~~1.5 days~~ | ~~1 then 2 parallel~~ | ✅ COMPLETE |
 | **Sprint 1** | F, G, H | 2 days | 3 agents parallel | ✅ COMPLETE |
 | **Sprint 2** | I, J → K | 1.5 days | 2 then 1 | ✅ COMPLETE |
-| **Sprint 3** | L, M → N → O | 5 days | Overlapping pyramid | ⏳ NEXT |
+| **Sprint 3** | L ✅, M ✅, N 🔄, O ⏳ | 5 days | Overlapping pyramid | 🔄 IN PROGRESS |
 | **Sprint 4** | A, B | 1 day | 2 parallel (deferred security) | ⏳ Deferred |
 
 **Total estimated wall-clock time: ~11 days** (Phase 1 deferred, same total)
