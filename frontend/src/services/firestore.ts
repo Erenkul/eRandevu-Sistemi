@@ -21,8 +21,9 @@ import {
 } from 'firebase/firestore';
 import type {
   Unsubscribe,
+  QueryConstraint,
 } from 'firebase/firestore';
-import { db, COLLECTIONS } from '../lib/firebase';
+import { db, COLLECTIONS, auth } from '../lib/firebase';
 import type {
   Business,
   Service,
@@ -33,6 +34,12 @@ import type {
   StaffFormData,
   BookingFormData,
 } from '../types';
+
+interface DailyScheduleAppointment {
+  appointmentId: string;
+  startTime: number;
+  durationMinutes: number;
+}
 
 // ============ BUSINESS OPERATIONS ============
 
@@ -168,6 +175,75 @@ export async function deleteStaff(staffId: string): Promise<void> {
   await updateStaff(staffId, { isActive: false });
 }
 
+// ============ APPOINTMENT NOTIFICATION HELPER ============
+
+async function notifyAppointmentStatusChange(
+  appointmentId: string,
+  appointmentData: any,
+  newStatus: string,
+  cancelledByCustomer: boolean
+): Promise<void> {
+  try {
+    const { createNotification } = await import('./notifications');
+
+    if (newStatus === 'cancelled') {
+      if (!appointmentData.businessId) {
+        console.log('[Notify] No businessId for cancellation notification');
+        return;
+      }
+      const businessSnap = await getDoc(doc(db, COLLECTIONS.BUSINESSES, appointmentData.businessId));
+      if (businessSnap.exists()) {
+        const businessOwnerId = businessSnap.data().ownerId;
+        console.log('[Notify] Creating cancellation notification for owner:', businessOwnerId);
+        await createNotification({
+          userId: businessOwnerId,
+          type: 'appointment_cancelled',
+          title: 'Randevu İptal Edildi',
+          message: cancelledByCustomer
+            ? `${appointmentData.customerName} randevuyu iptal etti.`
+            : 'Bir randevu iptal edildi.',
+          appointmentId,
+          businessId: appointmentData.businessId,
+        });
+      }
+      return;
+    }
+
+    if (!appointmentData.customerId) {
+      console.log('[Notify] No customerId for status notification:', newStatus);
+      return;
+    }
+
+    let title = '';
+    let message = '';
+
+    switch (newStatus) {
+      case 'confirmed':
+        title = 'Randevunuz Onaylandı';
+        message = `Randevunuz ${appointmentData.staffName} tarafından onaylandı.`;
+        break;
+      case 'completed':
+        title = 'Randevunuz Tamamlandı';
+        message = `Randevunuz başarıyla tamamlandı.`;
+        break;
+      default:
+        return;
+    }
+
+    console.log('[Notify] Creating notification for customer:', appointmentData.customerId, newStatus);
+    await createNotification({
+      userId: appointmentData.customerId,
+      type: newStatus === 'confirmed' ? 'appointment_confirmed' : 'appointment_completed',
+      title,
+      message,
+      appointmentId,
+      businessId: appointmentData.businessId,
+    });
+  } catch (error) {
+    console.error('[Notify] Error creating notification:', error);
+  }
+}
+
 // ============ APPOINTMENT OPERATIONS ============
 
 export async function getAppointments(
@@ -179,7 +255,7 @@ export async function getAppointments(
     endDate?: Date;
   }
 ): Promise<Appointment[]> {
-  const queryConstraints: any[] = [where('businessId', '==', businessId)];
+  const queryConstraints: QueryConstraint[] = [where('businessId', '==', businessId)];
 
   // NATIVE FIRESTORE FİLTRELEME (Okuma Maliyetlerini Dramatik Düşürür)
   if (filters?.staffId) {
@@ -233,9 +309,16 @@ export async function createAppointment(data: BookingFormData & { businessId: st
   const dailyScheduleRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
   const appointmentRef = doc(collection(db, COLLECTIONS.APPOINTMENTS)); // Henüz kaydedilmeyen yeni ID
 
+  let businessOwnerId: string | null = null;
+
   await runTransaction(db, async (transaction) => {
+    const businessSnap = await transaction.get(doc(db, COLLECTIONS.BUSINESSES, data.businessId));
+    if (businessSnap.exists()) {
+      businessOwnerId = businessSnap.data().ownerId;
+    }
+
     const dailyScheduleSnap = await transaction.get(dailyScheduleRef);
-    let dailyAppointments: any[] = [];
+    let dailyAppointments: DailyScheduleAppointment[] = [];
 
     if (dailyScheduleSnap.exists()) {
       dailyAppointments = dailyScheduleSnap.data().appointments || [];
@@ -294,6 +377,7 @@ export async function createAppointment(data: BookingFormData & { businessId: st
       customerPhone: formatPhoneNumber(data.customerPhone),
       customerEmail: data.customerEmail || null,
       customerNote: data.customerNote || null,
+      customerId: auth.currentUser?.uid || null,
       services,
       dateTime: Timestamp.fromDate(data.dateTime),
       totalDurationMinutes: totalDuration,
@@ -308,54 +392,83 @@ export async function createAppointment(data: BookingFormData & { businessId: st
     });
   });
 
-  return appointmentRef.id;
+  const appointmentId = appointmentRef.id;
+
+  if (businessOwnerId) {
+    console.log('[CreateAppt] Creating notification for business owner:', businessOwnerId);
+    const { createNotification } = await import('./notifications');
+    await createNotification({
+      userId: businessOwnerId,
+      type: 'new_appointment_request',
+      title: 'Yeni Randevu Talebi',
+      message: `${data.customerName} adlı müşteri yeni bir randevu talep etti.`,
+      appointmentId: appointmentId,
+      businessId: data.businessId,
+    });
+  } else {
+    console.log('[CreateAppt] No businessOwnerId, skipping notification');
+  }
+
+  return appointmentId;
 }
 
 export async function updateAppointmentStatus(
   appointmentId: string,
   status: string,
-  cancellationReason?: string
+  cancellationReason?: string,
+  isCustomerCancellation = false
 ): Promise<void> {
   const docRef = doc(db, COLLECTIONS.APPOINTMENTS, appointmentId);
 
-  // İPTAL (Cancel) DURUMUNDA GÖLGE DOKÜMANDAN TEMİZLİK (ArrayRemove işlemi)
+  const aptSnap = await getDoc(docRef);
+  if (!aptSnap.exists()) return;
+  const appointmentData = aptSnap.data();
+
   if (status === 'cancelled') {
-    const aptSnap = await getDoc(docRef);
-    if (aptSnap.exists()) {
-      const data = aptSnap.data();
+    const updateData: Record<string, unknown> = { status, updatedAt: serverTimestamp() };
+    if (cancellationReason) updateData.cancellationReason = cancellationReason;
+
+    if (isCustomerCancellation) {
+      await updateDoc(docRef, updateData);
+      await notifyAppointmentStatusChange(appointmentId, appointmentData, status, true);
+      return;
+    }
+
+    let updated = false;
+    await runTransaction(db, async (t) => {
+      const snap = await t.get(docRef);
+      if (!snap.exists()) return;
+
+      updated = true;
+      const data = snap.data();
       const date = data.dateTime.toDate();
       const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const dailyRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
 
-      await runTransaction(db, async (t) => {
-        // Önce randevu tablosunu temizliyoruz
-        const updateData: any = { status, updatedAt: serverTimestamp() };
-        if (cancellationReason) updateData.cancellationReason = cancellationReason;
-        t.update(docRef, updateData);
+      const dailySnap = await t.get(dailyRef);
 
-        // Sonra gölge dokümandan Array'i filtreleyerek (kaldırarak) güncelliyoruz
-        const dailySnap = await t.get(dailyRef);
-        if (dailySnap.exists()) {
-          const dailyData = dailySnap.data();
-          const filtered = (dailyData.appointments || []).filter((a: any) => a.appointmentId !== appointmentId);
-          t.update(dailyRef, { appointments: filtered });
-        }
-      });
-      return; // Transaction bittiği için alttaki standart işleme gerek yok
+      t.update(docRef, updateData);
+
+      if (dailySnap.exists()) {
+        const dailyData = dailySnap.data();
+        const filtered = (dailyData.appointments || []).filter((a: DailyScheduleAppointment) => a.appointmentId !== appointmentId);
+        t.update(dailyRef, { appointments: filtered });
+      }
+    });
+    if (!updated) {
+      await updateDoc(docRef, updateData);
     }
+    await notifyAppointmentStatusChange(appointmentId, appointmentData, status, false);
+    return;
   }
 
-  // İptal harici durumlar için standart güncelleme
-  const updateData: Record<string, any> = {
+  const updateData: Record<string, unknown> = {
     status,
     updatedAt: serverTimestamp(),
   };
 
-  if (status === 'cancelled' && cancellationReason) {
-    updateData.cancellationReason = cancellationReason;
-  }
-
   await updateDoc(docRef, updateData);
+  await notifyAppointmentStatusChange(appointmentId, appointmentData, status, false);
 }
 
 // Fetch all appointments for a specific customer phone number (customer-facing)
@@ -523,7 +636,7 @@ export async function getAvailableSlots(
   const dailyRef = doc(db, 'daily_schedules', `${businessId}_${staffId}_${dateString}`);
   const dailySnap = await getDoc(dailyRef);
   
-  let activeAppointments: any[] = [];
+  let activeAppointments: DailyScheduleAppointment[] = [];
   if (dailySnap.exists()) {
     activeAppointments = dailySnap.data().appointments || [];
   }

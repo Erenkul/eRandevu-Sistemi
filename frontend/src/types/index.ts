@@ -179,6 +179,7 @@ export interface User {
   businessId?: string; // İşletme sahibi ise
   businessName?: string;
   role: 'admin' | 'staff' | 'customer';
+  favoriteBusinessIds?: string[];
 }
 
 // ============ DAILY STATS ============

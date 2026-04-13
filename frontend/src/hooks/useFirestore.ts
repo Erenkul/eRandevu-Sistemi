@@ -241,24 +241,33 @@ export function useTodayAppointments(businessId: string | undefined): UseDataLis
 // Real-time appointments hook
 export function useRealtimeAppointments(businessId: string | undefined): UseDataListResult<Appointment> {
   const [data, setData] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(businessId !== undefined);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!businessId) {
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    let unsubscribe: () => void;
 
-    const unsubscribe = subscribeToAppointments(businessId, (appointments) => {
-      setData(appointments);
-      setLoading(false);
-    });
+    const setupSubscription = () => {
+      setLoading(true);
+      setError(null);
 
-    return () => unsubscribe();
+      unsubscribe = subscribeToAppointments(businessId, (appointments) => {
+        setData(appointments);
+        setLoading(false);
+      });
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [businessId]);
 
   const refetch = useCallback(() => {

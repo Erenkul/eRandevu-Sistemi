@@ -46,7 +46,7 @@ export const Step5Preview: React.FC<Step5PreviewProps> = ({
         <div className="preview-section">
             <h4><Clock size={16} /> Çalışma Saatleri</h4>
             {Object.entries(workingHours)
-                .filter(([_, hours]) => hours.isOpen)
+                .filter(([, hours]) => hours.isOpen)
                 .map(([day, hours]) => (
                     <div key={day} className="preview-item">
                         <span className="preview-label">{DAY_NAMES[day]}</span>

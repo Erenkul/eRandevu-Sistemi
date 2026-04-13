@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { getBusinessBySlug } from '../services/firestore';
 import type { Business } from '../types';
 
@@ -9,33 +9,26 @@ interface UseBusinessBySlugResult {
 }
 
 export function useBusinessBySlug(slug: string | undefined): UseBusinessBySlugResult {
-    const [data, setData] = useState<Business | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [state, setState] = useState<{ data: Business | null; loading: boolean; error: string | null }>({
+        data: null,
+        loading: false,
+        error: null,
+    });
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
-        if (!slug) {
-            setData(null);
-            return;
-        }
+        if (!slug) return;
 
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
-
-        getBusinessBySlug(slug)
-            .then((business) => {
-                if (!cancelled) setData(business);
-            })
-            .catch((err) => {
-                if (!cancelled) setError(err.message || 'İşletme bulunamadı.');
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
-
-        return () => { cancelled = true; };
+        startTransition(async () => {
+            setState(s => ({ ...s, loading: true, error: null }));
+            try {
+                const business = await getBusinessBySlug(slug);
+                setState({ data: business, loading: false, error: null });
+            } catch (err) {
+                setState({ data: null, loading: false, error: err instanceof Error ? err.message : 'İşletme bulunamadı.' });
+            }
+        });
     }, [slug]);
 
-    return { data, loading, error };
+    return { data: state.data, loading: isPending || state.loading, error: state.error };
 }

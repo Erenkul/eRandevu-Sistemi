@@ -126,9 +126,9 @@ export const BookingPage: React.FC = () => {
 
             setConfirmationCode(appointmentId.slice(0, 8).toUpperCase());
             setIsConfirmed(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Booking error:', err);
-            setError(err.message || 'Randevu oluşturulurken bir hata oluştu.');
+            setError(err instanceof Error ? err.message : 'Randevu oluşturulurken bir hata oluştu.');
         } finally {
             setIsSubmitting(false);
         }
@@ -281,7 +281,7 @@ export const BookingPage: React.FC = () => {
 
     return (
         <div className="booking-page">
-            <BookingHeader currentStep={currentStep} businessName={business.name} onBack={() => navigate('/')} />
+            <BookingHeader currentStep={currentStep} businessName={business.name} businessId={business.id} onBack={() => navigate('/')} />
 
             <div className="booking-content">
                 <div className="booking-sidebar-desktop">

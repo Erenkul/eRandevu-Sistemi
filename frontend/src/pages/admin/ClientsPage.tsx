@@ -6,6 +6,7 @@ import './ClientsPage.css';
 import { useAuth } from '../../contexts';
 import { useCustomers } from '../../hooks';
 import type { Customer } from '../../types';
+import type { Timestamp } from 'firebase/firestore';
 
 export const ClientsPage: React.FC = () => {
     const { user } = useAuth();
@@ -27,10 +28,11 @@ export const ClientsPage: React.FC = () => {
                 case 'name': return a.name.localeCompare(b.name);
                 case 'visits': return b.totalAppointments - a.totalAppointments;
                 case 'spent': return b.totalSpent - a.totalSpent;
-                case 'lastVisit':
+                case 'lastVisit': {
                     const dateA = a.lastVisit ? a.lastVisit.toMillis() : 0;
                     const dateB = b.lastVisit ? b.lastVisit.toMillis() : 0;
                     return dateB - dateA;
+                }
                 default: return 0;
             }
         });
@@ -45,7 +47,7 @@ export const ClientsPage: React.FC = () => {
         setSelectedClient(null);
     };
 
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: Timestamp | null | undefined) => {
         if (!timestamp) return '-';
         return timestamp.toDate().toLocaleDateString('tr-TR', {
             day: 'numeric',

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type ThemeType = 'light' | 'dark' | 'auto';
-export type ColorPalette = 'blue' | 'emerald' | 'violet' | 'amber' | 'red' | 'pink';
 
 interface ThemeContextType {
     theme: ThemeType;
@@ -10,18 +9,22 @@ interface ThemeContextType {
     setColorPalette: (color: string) => void;
 }
 
-const colorMap: Record<string, string> = {
-    '#3b82f6': '#3b82f6', // blue
-    '#10b981': '#10b981', // emerald
-    '#8b5cf6': '#8b5cf6', // violet
-    '#f59e0b': '#f59e0b', // amber
-    '#ef4444': '#ef4444', // red
-    '#ec4899': '#ec4899', // pink
-};
-
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ThemeProviderProps {
+    children: React.ReactNode;
+}
+
+const colorMap: Record<string, string> = {
+    '#3b82f6': '#3b82f6',
+    '#10b981': '#10b981',
+    '#8b5cf6': '#8b5cf6',
+    '#f59e0b': '#f59e0b',
+    '#ef4444': '#ef4444',
+    '#ec4899': '#ec4899',
+};
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const [theme, setThemeState] = useState<ThemeType>(() => {
         const stored = localStorage.getItem('theme');
         return (stored as ThemeType) || 'dark';
@@ -45,7 +48,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         applyTheme();
         localStorage.setItem('theme', theme);
 
-        // Optionally listen to OS theme changes if auto is selected
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleChange = () => {
             if (theme === 'auto') applyTheme();
@@ -56,7 +58,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     useEffect(() => {
         const root = document.documentElement;
-        // set primary color explicitly based on palette
         root.style.setProperty('--color-primary', colorMap[colorPalette] || colorPalette);
         localStorage.setItem('colorPalette', colorPalette);
     }, [colorPalette]);
@@ -76,10 +77,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 };
 
-export const useTheme = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export function useTheme() {
     const context = useContext(ThemeContext);
     if (context === undefined) {
         throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
-};
+}

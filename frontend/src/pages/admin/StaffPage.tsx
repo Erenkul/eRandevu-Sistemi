@@ -243,7 +243,7 @@ export const StaffPage: React.FC = () => {
                                 <label>Pozisyon</label>
                                 <select
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value as StaffFormData['role'] })}
                                 >
                                     {roles.map(role => (
                                         <option key={role.value} value={role.value}>{role.label}</option>

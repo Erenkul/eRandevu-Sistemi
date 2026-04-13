@@ -5,11 +5,12 @@ import {
     Phone, Mail, Edit2, Home, Trash2, HeartOff,
 } from 'lucide-react';
 import { PrimaryButton, SecondaryButton, Input, Logo, Card } from '../../components/ui';
+import { NotificationBell } from '../../components/notifications';
 import '../../pages/CustomerDashboard.css';
 import { useAuth, useToast, useTheme } from '../../contexts';
-import { useCustomerAppointments } from '../../hooks';
+import { useCustomerAppointments, useBusinesses } from '../../hooks';
 import { updateAppointmentStatus } from '../../services/firestore';
-import type { Appointment } from '../../types';
+import type { Appointment, Business } from '../../types';
 import { HomeTab } from './components/HomeTab';
 
 export type { Appointment };
@@ -43,12 +44,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
 export const CustomerDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { user, logout, updateUserProfile } = useAuth();
+    const { user, logout, updateUserProfile, toggleFavorite } = useAuth();
     const { showToast } = useToast();
     const { theme, setTheme, colorPalette, setColorPalette } = useTheme();
     const { data: rawAppointments, loading: appointmentsLoading, refetch } = useCustomerAppointments(user?.phoneNumber);
+    const { data: allBusinesses } = useBusinesses();
 
-    const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('home');
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -62,6 +63,22 @@ export const CustomerDashboard: React.FC = () => {
         if (user) setEditProfileData({ displayName: user.displayName || '', phoneNumber: user.phoneNumber || '' });
     }, [user, showEditProfileModal]);
 
+    const favoriteBusinessIds = useMemo(() => user?.favoriteBusinessIds || [], [user?.favoriteBusinessIds]);
+    const favorites = useMemo(() => {
+        if (!allBusinesses) return [];
+        return favoriteBusinessIds.map(id => {
+            const business = allBusinesses.find((b: Business) => b.id === id);
+            if (!business) return null;
+            return {
+                id,
+                name: business.name,
+                category: business.city || 'İşletme',
+                initials: getInitials(business.name),
+                businessId: id,
+            };
+        }).filter(Boolean) as Favorite[];
+    }, [favoriteBusinessIds, allBusinesses]);
+
     const upcomingAppointments = useMemo(() => rawAppointments.filter(a => getStatusGroup(a.status) === 'upcoming'), [rawAppointments]);
     const pastAppointments = useMemo(() => rawAppointments.filter(a => getStatusGroup(a.status) !== 'upcoming'), [rawAppointments]);
 
@@ -71,13 +88,20 @@ export const CustomerDashboard: React.FC = () => {
     const handleGoHome = () => navigate('/');
     const handleViewDetails = (appointment: Appointment) => { setSelectedAppointment(appointment); setShowDetailModal(true); };
     const handleCancelClick = (appointment: Appointment) => { setSelectedAppointment(appointment); setShowCancelModal(true); };
-    const handleRemoveFavorite = (favoriteId: string) => setFavorites(favorites.filter(f => f.id !== favoriteId));
+    const handleRemoveFavorite = async (businessId: string) => {
+        try {
+            await toggleFavorite(businessId);
+            showToast('Favorilerden kaldırıldı', 'success');
+        } catch {
+            showToast('Favori kaldırılamadı', 'error');
+        }
+    };
 
     const handleConfirmCancel = async () => {
         if (!selectedAppointment) return;
         try {
             setIsCancelling(true);
-            await updateAppointmentStatus(selectedAppointment.id, 'cancelled', 'Müşteri tarafından iptal edildi.');
+            await updateAppointmentStatus(selectedAppointment.id, 'cancelled', 'Müşteri tarafından iptal edildi.', true);
             setShowCancelModal(false); setSelectedAppointment(null);
             showToast('Randevu başarıyla iptal edildi', 'success'); refetch();
         } catch (err) {
@@ -142,6 +166,7 @@ export const CustomerDashboard: React.FC = () => {
                     <button className={`customer-nav-item ${activeTab === 'favorites' ? 'active' : ''}`} onClick={() => setActiveTab('favorites')}><Heart size={18} />Favorilerim</button>
                 </nav>
                 <div className="customer-header-user">
+                    <NotificationBell />
                     <button className="customer-nav-item" onClick={() => setActiveTab('profile')}><User size={18} />Profil</button>
                     <button className="customer-nav-item" onClick={handleLogout} title="Çıkış Yap"><LogOut size={18} /></button>
                     <div className="customer-user-avatar">{userInitials}</div>

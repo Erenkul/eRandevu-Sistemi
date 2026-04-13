@@ -82,7 +82,7 @@ export const usePhoneValidation = () => {
                     delete newErrors.email;
                 }
                 break;
-            case 'password':
+            case 'password': {
                 const passwordValidation = validatePassword(values.password);
                 if (!values.password) {
                     newErrors.password = 'Şifre gerekli';
@@ -97,6 +97,7 @@ export const usePhoneValidation = () => {
                     delete newErrors.confirmPassword;
                 }
                 break;
+            }
             case 'confirmPassword':
                 if (!values.confirmPassword) {
                     newErrors.confirmPassword = 'Şifre tekrarı gerekli';

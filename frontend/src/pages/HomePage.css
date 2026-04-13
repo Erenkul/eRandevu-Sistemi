@@ -449,6 +449,29 @@
     color: var(--color-error);
 }
 
+.favorite-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.favorite-btn:hover {
+    background: var(--color-surface-variant);
+    color: var(--color-error);
+}
+
+.favorite-btn.active {
+    color: var(--color-error);
+}
+
 .business-card-body {
     padding: 1.25rem 1.5rem;
 }

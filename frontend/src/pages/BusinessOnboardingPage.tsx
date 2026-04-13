@@ -79,9 +79,9 @@ export const BusinessOnboardingPage: React.FC = () => {
             // but for now a simple navigation should work if we handle state update.
             navigate('/admin');
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error creating business:', err);
-            setError(err.message || 'İşletme oluşturulurken bir hata oluştu');
+            setError(err instanceof Error ? err.message : 'İşletme oluşturulurken bir hata oluştu');
         } finally {
             setLoading(false);
         }

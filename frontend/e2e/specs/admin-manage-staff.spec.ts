@@ -20,8 +20,6 @@ test.describe('Staff Management', () => {
 
     await staffPage.goto();
 
-    const initialCount = await page.locator('.staff-card:not(.add-card), .staff-item').count();
-
     await staffPage.clickAddStaff();
     await staffPage.expectModalOpen();
 

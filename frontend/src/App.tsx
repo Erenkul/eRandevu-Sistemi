@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, ToastProvider, ThemeProvider } from './contexts';
+import { AuthProvider, ToastProvider, ThemeProvider, NotificationProvider } from './contexts';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 import { ProtectedRoute } from './components/auth';
 import { CustomCursor, LoadingFallback } from './components/ui';
@@ -23,8 +23,9 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <CustomCursor />
-          <BrowserRouter>
+          <NotificationProvider>
+            <CustomCursor />
+            <BrowserRouter>
             <ErrorBoundary>
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
@@ -48,7 +49,8 @@ function App() {
                 </Routes>
               </Suspense>
             </ErrorBoundary>
-        </BrowserRouter>
+          </BrowserRouter>
+          </NotificationProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>

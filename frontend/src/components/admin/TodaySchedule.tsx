@@ -2,13 +2,10 @@ import React from 'react';
 import { Calendar, User } from 'lucide-react';
 import { Card, CardHeader, SkeletonCard } from '../ui';
 import './TodaySchedule.css';
-
-// Appointment types are already defined in types/index.ts usually, but keeping local interface for now
-// Interface removed as we are using mapped Firestore data which doesn't strictly match this locally defined type yet.
-// In a stricter implementation we would import Appointment type from '../../types'
+import type { Appointment } from '../../types';
 
 interface TodayScheduleProps {
-    appointments: any[]; // Using any[] temporarily effectively, will map inside
+    appointments: Appointment[];
     loading?: boolean;
 }
 
@@ -22,24 +19,19 @@ const statusLabels: Record<string, string> = {
 
 export const TodaySchedule = React.memo<TodayScheduleProps>(({ appointments = [], loading }) => {
 
-    // Helper to format time
-    const formatTime = (date: any) => {
+    const formatTime = (date: Appointment['dateTime']) => {
         if (!date) return '';
-        // Handle Firestore Timestamp
-        const d = date.toDate ? date.toDate() : new Date(date);
+        const d = date instanceof Date ? date : date.toDate();
         return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // Calculate duration
-    const getDuration = (start: any, end: any) => {
-        if (!start || !end) return '';
-        const s = start.toDate ? start.toDate() : new Date(start);
-        const e = end.toDate ? end.toDate() : new Date(end);
-        const diffMins = Math.round((e.getTime() - s.getTime()) / 60000);
-        return `${diffMins} dk`;
+    const getServiceName = (services: Appointment['services']) => {
+        if (!services || services.length === 0) return '';
+        return services.map(s => s.serviceName).join(', ');
     };
 
-    const getInitials = (name: string) => {
+    const getInitials = (name?: string) => {
+        if (!name) return '?';
         return name
             .split(' ')
             .map(n => n[0])
@@ -81,13 +73,13 @@ export const TodaySchedule = React.memo<TodayScheduleProps>(({ appointments = []
                     appointments.map((appointment) => (
                         <div key={appointment.id} className="schedule-item">
                             <div className="schedule-time">
-                                <div className="schedule-time-value">{formatTime(appointment.startTime)}</div>
-                                <div className="schedule-time-duration">{getDuration(appointment.startTime, appointment.endTime)}</div>
+                                <div className="schedule-time-value">{formatTime(appointment.dateTime)}</div>
+                                <div className="schedule-time-duration">{appointment.totalDurationMinutes} dk</div>
                             </div>
-                            <div className="schedule-avatar">{getInitials(appointment.clientName)}</div>
+                            <div className="schedule-avatar">{getInitials(appointment.customerName)}</div>
                             <div className="schedule-info">
-                                <div className="schedule-client">{appointment.clientName}</div>
-                                <div className="schedule-service">{appointment.serviceName}</div>
+                                <div className="schedule-client">{appointment.customerName}</div>
+                                <div className="schedule-service">{getServiceName(appointment.services)}</div>
                                 <div className="schedule-staff">
                                     <User size={14} />
                                     {appointment.staffName}

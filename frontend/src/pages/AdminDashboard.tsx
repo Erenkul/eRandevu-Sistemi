@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { AdminSidebar, DashboardStats, TodaySchedule, PopularServices } from '../components/admin';
-import { IconButton, Card } from '../components/ui';
+import { Card } from '../components/ui';
+import { NotificationBell } from '../components/notifications';
 import './AdminDashboard.css';
 
 import { useAuth } from '../contexts';
@@ -62,7 +63,7 @@ export const AdminDashboard: React.FC = () => {
                         <p>Hoş geldiniz, işte bugünün özeti.</p>
                     </div>
 
-                    <IconButton icon={Bell} tooltip="Bildirimler" aria-label="Bildirimler" />
+                    <NotificationBell />
                 </header>
 
                 <div className="admin-content">

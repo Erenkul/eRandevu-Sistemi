@@ -68,7 +68,7 @@ export const Textarea: React.FC<TextareaProps> = ({
     );
 };
 
-interface SearchInputProps extends Omit<InputProps, 'icon'> { }
+type SearchInputProps = Omit<InputProps, 'icon'>;
 
 export const SearchInput: React.FC<SearchInputProps> = ({
     className = '',

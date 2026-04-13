@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { getBusiness } from '../services/firestore';
 import type { Business } from '../types';
 
@@ -10,41 +10,29 @@ interface UseBusinessResult {
 }
 
 export function useBusiness(businessId: string | undefined): UseBusinessResult {
-    const [data, setData] = useState<Business | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [state, setState] = useState<{ data: Business | null; loading: boolean; error: string | null }>({
+        data: null,
+        loading: false,
+        error: null,
+    });
     const [tick, setTick] = useState(0);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
-        if (!businessId) {
-            setData(null);
-            setLoading(false);
-            return;
-        }
+        if (!businessId) return;
 
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
-
-        getBusiness(businessId)
-            .then((business) => {
-                if (!cancelled) {
-                    setData(business);
-                }
-            })
-            .catch((err) => {
-                if (!cancelled) {
-                    setError(err.message || 'İşletme bilgileri alınamadı.');
-                }
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
-
-        return () => { cancelled = true; };
+        startTransition(async () => {
+            setState(s => ({ ...s, loading: true, error: null }));
+            try {
+                const business = await getBusiness(businessId);
+                setState({ data: business, loading: false, error: null });
+            } catch (err) {
+                setState({ data: null, loading: false, error: err instanceof Error ? err.message : 'İşletme bilgileri alınamadı.' });
+            }
+        });
     }, [businessId, tick]);
 
     const refetch = () => setTick(t => t + 1);
 
-    return { data, loading, error, refetch };
+    return { data: state.data, loading: isPending || state.loading, error: state.error, refetch };
 }

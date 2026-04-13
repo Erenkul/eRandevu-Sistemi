@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const STYLE_ID = 'skeleton-shimmer-keyframes';
 
@@ -35,10 +35,12 @@ interface SkeletonProps {
 
 export const Skeleton = React.memo<SkeletonProps>(({ width = '100%', height = 20, borderRadius, className, style }) => {
     const mounted = useRef(false);
-    if (!mounted.current) {
-        ensureShimmerStyle();
-        mounted.current = true;
-    }
+    useEffect(() => {
+        if (!mounted.current) {
+            ensureShimmerStyle();
+            mounted.current = true;
+        }
+    }, []);
 
     return (
         <div className={className} style={{ ...skeletonStyle(width, height, borderRadius), ...style }} />

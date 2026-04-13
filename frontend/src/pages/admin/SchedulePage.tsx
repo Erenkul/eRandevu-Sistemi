@@ -21,6 +21,7 @@ export const SchedulePage: React.FC = () => {
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+    const [showCancelled, setShowCancelled] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<FirestoreAppointment | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -51,16 +52,18 @@ export const SchedulePage: React.FC = () => {
         const targetDateStr = currentDate.toDateString();
 
         return realAppointments.filter(apt => {
-            const aptDate = apt.dateTime?.toDate?.() || new Date(apt.dateTime as any);
-            return aptDate.toDateString() === targetDateStr && apt.status !== 'cancelled' && apt.status !== 'noShow';
+            const aptDate = apt.dateTime?.toDate ? apt.dateTime.toDate() : (apt.dateTime as unknown as Date);
+            const isCancelled = apt.status === 'cancelled' || apt.status === 'noShow';
+            if (isCancelled && !showCancelled) return false;
+            return aptDate.toDateString() === targetDateStr;
         });
-    }, [realAppointments, currentDate]);
+    }, [realAppointments, currentDate, showCancelled]);
 
     const getAppointmentForSlot = (time: string, staffId: string) => {
         return dayAppointments.find(apt => {
             if (apt.staffId !== staffId) return false;
 
-            const aptDate = apt.dateTime?.toDate?.() || new Date(apt.dateTime as any);
+            const aptDate = apt.dateTime?.toDate ? apt.dateTime.toDate() : (apt.dateTime as unknown as Date);
             const aptTime = aptDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
             // Simple direct match for start time
@@ -115,6 +118,7 @@ export const SchedulePage: React.FC = () => {
 
     const confirmedCount = dayAppointments.filter(a => a.status === 'confirmed').length;
     const pendingCount = dayAppointments.filter(a => a.status === 'pending').length;
+    const cancelledCount = dayAppointments.filter(a => a.status === 'cancelled' || a.status === 'noShow').length;
 
     if (!user) return <div>Lütfen giriş yapın.</div>;
     if (staffLoading || apptLoading) return <div className="p-8 text-center">Yükleniyor...</div>;
@@ -147,15 +151,23 @@ export const SchedulePage: React.FC = () => {
                         >
                             Gün
                         </button>
-                        {/* Weekly view not implemented yet */}
                         <button
                             className={viewMode === 'week' ? 'active' : ''}
                             style={{ opacity: 0.5, cursor: 'not-allowed' }}
-                        // onClick={() => setViewMode('week')}
                         >
                             Hafta
                         </button>
                     </div>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14 }}>
+                        <input
+                            type="checkbox"
+                            checked={showCancelled}
+                            onChange={(e) => setShowCancelled(e.target.checked)}
+                            style={{ width: 16, height: 16 }}
+                        />
+                        İptal edilmişleri göster
+                    </label>
 
                     <button
                         className="btn-primary"
@@ -184,6 +196,12 @@ export const SchedulePage: React.FC = () => {
                             <span className="summary-value">{pendingCount}</span>
                             <span className="summary-label">Bekleyen</span>
                         </div>
+                        {cancelledCount > 0 && (
+                            <div className="summary-item" style={{ opacity: 0.6 }}>
+                                <span className="summary-value">{cancelledCount}</span>
+                                <span className="summary-label">İptal</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Schedule Grid */}
@@ -293,7 +311,7 @@ export const SchedulePage: React.FC = () => {
                                 <div className="detail-item">
                                     <label>Tarih & Saat</label>
                                     <span>
-                                        {(selectedAppointment.dateTime?.toDate?.() || new Date(selectedAppointment.dateTime as any)).toLocaleDateString('tr-TR', {
+                                        {(selectedAppointment.dateTime?.toDate ? selectedAppointment.dateTime.toDate() : (selectedAppointment.dateTime as unknown as Date)).toLocaleDateString('tr-TR', {
                                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                                         })}
                                     </span>
@@ -301,7 +319,7 @@ export const SchedulePage: React.FC = () => {
                                 <div className="detail-item">
                                     <label>Saat</label>
                                     <span>
-                                        {(selectedAppointment.dateTime?.toDate?.() || new Date(selectedAppointment.dateTime as any)).toLocaleTimeString('tr-TR', {
+                                        {(selectedAppointment.dateTime?.toDate ? selectedAppointment.dateTime.toDate() : (selectedAppointment.dateTime as unknown as Date)).toLocaleTimeString('tr-TR', {
                                             hour: '2-digit', minute: '2-digit'
                                         })}
                                     </span>

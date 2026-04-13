@@ -434,7 +434,13 @@ describe('updateAppointmentStatus', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('updates status via updateDoc for non-cancelled status', async () => {
+    // Mock getDoc for appointment and for notification (business lookup)
+    mockGetDoc
+      .mockResolvedValueOnce(makeDocSnap('appt-1', { customerId: 'user-1', businessId: 'biz-1', staffName: 'Test Staff' }))
+      .mockResolvedValueOnce(makeDocSnap('biz-1', { ownerId: 'owner-1' })); // for notification
     mockUpdateDoc.mockResolvedValueOnce(undefined);
+    // Mock addDoc for notification
+    mockAddDoc.mockResolvedValueOnce({ id: 'notif-1' } as any);
 
     await updateAppointmentStatus('appt-1', 'completed');
 
@@ -446,14 +452,24 @@ describe('updateAppointmentStatus', () => {
 
   it('uses transaction for cancelled status', async () => {
     const dateMs = Date.now();
-    const fakeSnap = makeDocSnap('appt-1', {
-      status: 'confirmed',
-      businessId: 'biz-1',
-      staffId: 'staff-1',
-      dateTime: { toDate: () => new Date(dateMs) },
-    });
-    mockGetDoc.mockResolvedValueOnce(fakeSnap);
-    mockRunTransaction.mockImplementation(async (_db, fn) => fn({ get: vi.fn().mockResolvedValue({ exists: () => false }), update: vi.fn(), set: vi.fn(), delete: vi.fn() }));
+    // First getDoc for the appointment
+    // Then getDoc inside notifyAppointmentStatusChange for business
+    mockGetDoc
+      .mockResolvedValueOnce(makeDocSnap('appt-1', {
+        status: 'confirmed',
+        businessId: 'biz-1',
+        staffId: 'staff-1',
+        dateTime: { toDate: () => new Date(dateMs) },
+        customerName: 'Test Customer',
+      }))
+      .mockResolvedValueOnce(makeDocSnap('biz-1', { ownerId: 'owner-1' })); // for notification
+    mockRunTransaction.mockImplementation(async (_db, fn) => fn({ 
+      get: vi.fn().mockResolvedValue({ exists: () => false }), 
+      update: vi.fn(), 
+      set: vi.fn(), 
+      delete: vi.fn() 
+    }));
+    mockAddDoc.mockResolvedValueOnce({ id: 'notif-1' } as any); // for notification
 
     await updateAppointmentStatus('appt-1', 'cancelled', 'Customer request');
 
@@ -461,7 +477,9 @@ describe('updateAppointmentStatus', () => {
   });
 
   it('falls through to updateDoc when cancelled doc does not exist', async () => {
-    mockGetDoc.mockResolvedValueOnce(makeDocSnap('appt-1', null));
+    // First getDoc returns null (appointment not found)
+    // notifyAppointmentStatusChange also calls getDoc but we don't care since appointmentData will be undefined
+    mockGetDoc.mockResolvedValue(makeDocSnap('appt-1', null));
     mockUpdateDoc.mockResolvedValueOnce(undefined);
 
     await updateAppointmentStatus('appt-1', 'cancelled');
@@ -575,13 +593,16 @@ describe('createAppointment', () => {
   it('creates appointment successfully when no conflicts exist', async () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
-        get: vi.fn().mockResolvedValue({ exists: () => false }),
+        get: vi.fn()
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ ownerId: 'owner-1' }) }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => false }), // dailyScheduleSnap
         set: vi.fn(),
         update: vi.fn(),
       };
       await fn(mockTx);
     });
     mockRunTransaction.mockImplementation(transactionMock);
+    mockAddDoc.mockResolvedValueOnce({ id: 'notif-1' } as any); // for notification
 
     const result = await createAppointment(baseBookingData);
 
@@ -600,8 +621,9 @@ describe('createAppointment', () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
         get: vi.fn()
-          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
-          .mockResolvedValueOnce({
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ ownerId: 'owner-1' }) }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) }) // dailyScheduleSnap
+          .mockResolvedValueOnce({ // for the appointment in the loop
             exists: () => true,
             data: () => ({ status: 'confirmed' }),
           }),

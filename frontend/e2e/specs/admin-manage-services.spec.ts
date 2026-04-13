@@ -20,8 +20,6 @@ test.describe('Service Management', () => {
 
     await servicesPage.goto();
 
-    const initialCount = await page.locator('.service-card:not(.add-card)').count();
-
     await servicesPage.clickAddService();
     await servicesPage.expectModalOpen();
 

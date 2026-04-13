@@ -137,3 +137,28 @@
         width: 16px;
     }
 }
+
+.booking-header .favorite-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.booking-header .favorite-btn:hover {
+    background: var(--color-surface-variant);
+    color: var(--color-error);
+    border-color: var(--color-error-light);
+}
+
+.booking-header .favorite-btn.active {
+    color: var(--color-error);
+    border-color: var(--color-error-light);
+}

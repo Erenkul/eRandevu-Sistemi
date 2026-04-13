@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Clock, MapPin, ArrowRight } from 'lucide-react';
+import { Star, Clock, MapPin, ArrowRight, Heart } from 'lucide-react';
 import { PrimaryButton } from '../../../components/ui';
 import { useServices } from '../../../hooks';
+import { useAuth } from '../../../contexts';
 import type { Business } from '../../../types';
 
 interface HomeBusinessCardProps {
@@ -12,7 +13,24 @@ interface HomeBusinessCardProps {
 }
 
 export const HomeBusinessCard = React.memo<HomeBusinessCardProps>(({ business, isOpen, onBook }) => {
+    const { user, toggleFavorite } = useAuth();
     const { data: services, loading } = useServices(business.id);
+
+    const isFavorite = user?.favoriteBusinessIds?.includes(business.id) ?? false;
+    const isCustomer = user?.role === 'customer';
+
+    const handleFavoriteClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user) {
+            window.location.href = '/login';
+            return;
+        }
+        try {
+            await toggleFavorite(business.id);
+        } catch (err) {
+            console.error('Favori ekleme hatası:', err);
+        }
+    };
 
     const getServiceDisplay = () => {
         if (loading) return <span className="business-category">Hizmetler Yükleniyor...</span>;
@@ -51,6 +69,16 @@ export const HomeBusinessCard = React.memo<HomeBusinessCardProps>(({ business, i
                     <Clock size={12} />
                     {isOpen ? 'Açık' : 'Kapalı'}
                 </div>
+                {isCustomer && (
+                    <button
+                        className={`favorite-btn ${isFavorite ? 'active' : ''}`}
+                        onClick={handleFavoriteClick}
+                        aria-label={isFavorite ? 'Favorilerden kaldır' : 'Favorilere ekle'}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+                    </button>
+                )}
             </div>
             <div className="business-card-body">
                 <h3>{business.name}</h3>

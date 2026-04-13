@@ -13,7 +13,7 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, getDoc, setDoc, serverTimestamp, type FieldValue, type Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, type FieldValue } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
 import type { User } from '../types';
 
@@ -32,12 +32,12 @@ export interface BusinessData {
   name: string;
   email: string;
   phone?: string;
-  slug: string; // URL friendly name
+  slug: string;
   ownerId: string;
   isActive: boolean;
   onboardingCompleted: boolean;
-  createdAt: Timestamp | FieldValue;
-  updatedAt: Timestamp | FieldValue;
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
   settings: {
     slotDuration: number;
     currency: string;
@@ -54,6 +54,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
+  toggleFavorite: (businessId: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               businessId: userData.businessId,
               businessName: userData.businessName,
               role,
+              favoriteBusinessIds: userData.favoriteBusinessIds || [],
             });
             setLoading(false);
           } else {
@@ -164,10 +166,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (err: unknown) {
-      const errorCode = err instanceof FirebaseError
-        ? err.code
-        : 'unknown';
-      const errorMessage = getErrorMessage(errorCode);
+      const errorMessage = err instanceof FirebaseError
+        ? getErrorMessage(err.code)
+        : err instanceof Error
+          ? getErrorMessage(err.message)
+          : 'Bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -242,10 +245,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
     } catch (err: unknown) {
-      const errorCode = err instanceof FirebaseError
-        ? err.code
-        : 'unknown';
-      const errorMessage = getErrorMessage(errorCode);
+      const errorMessage = err instanceof FirebaseError
+        ? getErrorMessage(err.code)
+        : err instanceof Error
+          ? getErrorMessage(err.message)
+          : 'Bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -256,10 +260,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       await signOut(auth);
     } catch (err: unknown) {
-      const errorCode = err instanceof FirebaseError
-        ? err.code
-        : 'unknown';
-      const errorMessage = getErrorMessage(errorCode);
+      const errorMessage = err instanceof FirebaseError
+        ? getErrorMessage(err.code)
+        : err instanceof Error
+          ? getErrorMessage(err.message)
+          : 'Bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -270,10 +275,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       await sendPasswordResetEmail(auth, email);
     } catch (err: unknown) {
-      const errorCode = err instanceof FirebaseError
-        ? err.code
-        : 'unknown';
-      const errorMessage = getErrorMessage(errorCode);
+      const errorMessage = err instanceof FirebaseError
+        ? getErrorMessage(err.code)
+        : err instanceof Error
+          ? getErrorMessage(err.message)
+          : 'Bir hata oluştu.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -320,19 +326,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = () => setError(null);
 
+  const toggleFavorite = async (businessId: string) => {
+    if (!user) throw new Error('Oturum açmış kullanıcı bulunamadı.');
+
+    const currentFavorites = user.favoriteBusinessIds || [];
+    const isFavorite = currentFavorites.includes(businessId);
+    const newFavorites = isFavorite
+      ? currentFavorites.filter(id => id !== businessId)
+      : [...currentFavorites, businessId];
+
+    const userRef = doc(db, COLLECTIONS.USERS, user.uid);
+    await setDoc(userRef, { favoriteBusinessIds: newFavorites }, { merge: true });
+    setUser(prev => prev ? { ...prev, favoriteBusinessIds: newFavorites } : null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout, resetPassword, updateUserProfile, clearError }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, logout, resetPassword, updateUserProfile, toggleFavorite, clearError }}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }
 
 function getErrorMessage(code: string): string {
@@ -348,4 +360,13 @@ function getErrorMessage(code: string): string {
     'role-mismatch-customer': 'Bu e-posta adresi bir işletme hesabına aittir. Müşteri girişi yapamazsınız.'
   };
   return messages[code] || 'Bir hata oluştu.';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }
