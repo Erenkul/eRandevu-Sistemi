@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors, X, Check, XCircle, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSidebar } from '../../components/admin';
 import { Card } from '../../components/ui';
 import './SchedulePage.css';
@@ -11,6 +11,7 @@ import type { Appointment as FirestoreAppointment } from '../../types';
 
 export const SchedulePage: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
     const { showToast } = useToast();
     const businessId = user?.businessId;
@@ -19,7 +20,14 @@ export const SchedulePage: React.FC = () => {
     const { data: staffList, loading: staffLoading } = useStaff(businessId);
     const { data: realAppointments, loading: apptLoading } = useRealtimeAppointments(businessId);
 
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(() => {
+        const dateParam = searchParams.get('date');
+        if (dateParam) {
+            const d = new Date(dateParam);
+            if (!isNaN(d.getTime())) return d;
+        }
+        return new Date();
+    });
     const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
     const [showCancelled, setShowCancelled] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<FirestoreAppointment | null>(null);

@@ -8,6 +8,7 @@ import {
     Calendar,
     Settings,
     LogOut,
+    Bell,
 } from 'lucide-react';
 import { Logo } from '../ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
     { icon: <Users />, label: 'Personel', path: '/admin/barbers' },
     { icon: <Scissors />, label: 'Hizmetler', path: '/admin/services' },
     { icon: <UserCircle />, label: 'Müşteriler', path: '/admin/clients' },
+    { icon: <Bell />, label: 'Randevu Talepleri', path: '/admin/requests' },
     { icon: <Calendar />, label: 'Takvim', path: '/admin/schedule' },
     { icon: <Settings />, label: 'Ayarlar', path: '/admin/settings' },
 ];

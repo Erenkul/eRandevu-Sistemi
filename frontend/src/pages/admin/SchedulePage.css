@@ -256,32 +256,32 @@
 }
 
 .action-buttons .action-btn.confirm {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
+    background: var(--color-success-light);
+    color: var(--color-success);
 }
 
 .action-buttons .action-btn.confirm:hover {
-    background: #10b981;
+    background: var(--color-success);
     color: white;
 }
 
 .action-buttons .action-btn.complete {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    background: var(--color-info-light);
+    color: var(--color-info);
 }
 
 .action-buttons .action-btn.complete:hover {
-    background: #6366f1;
+    background: var(--color-info);
     color: white;
 }
 
 .action-buttons .action-btn.cancel {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: var(--color-error-light);
+    color: var(--color-error);
 }
 
 .action-buttons .action-btn.cancel:hover {
-    background: #ef4444;
+    background: var(--color-error);
     color: white;
 }
 

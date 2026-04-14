@@ -15,6 +15,7 @@ const ServicesPage = lazy(() => import('./pages/admin/ServicesPage').then(m => (
 const StaffPage = lazy(() => import('./pages/admin/StaffPage').then(m => ({ default: m.StaffPage })));
 const ClientsPage = lazy(() => import('./pages/admin/ClientsPage').then(m => ({ default: m.ClientsPage })));
 const SchedulePage = lazy(() => import('./pages/admin/SchedulePage').then(m => ({ default: m.SchedulePage })));
+const AppointmentRequestsPage = lazy(() => import('./pages/admin/AppointmentRequestsPage').then(m => ({ default: m.AppointmentRequestsPage })));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard/CustomerDashboard').then(m => ({ default: m.CustomerDashboard })));
 
@@ -38,6 +39,7 @@ function App() {
                     <Route path="/admin/barbers" element={<StaffPage />} />
                     <Route path="/admin/clients" element={<ClientsPage />} />
                     <Route path="/admin/schedule" element={<SchedulePage />} />
+                    <Route path="/admin/requests" element={<AppointmentRequestsPage />} />
                     <Route path="/admin/settings" element={<SettingsPage />} />
                   </Route>
                   <Route element={<ProtectedRoute allowedRoles={['customer']} />}>

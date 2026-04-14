@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { useNotifications } from '../../contexts';
 import { formatDistanceToNow } from '../../lib/dateUtils';
 
 export const NotificationBell: React.FC = () => {
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -115,7 +117,12 @@ export const NotificationBell: React.FC = () => {
               {notifications.slice(0, 20).map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
+                  onClick={() => {
+                    if (!notification.read) markAsRead(notification.id);
+                    if (notification.appointmentId) {
+                      navigate('/admin/requests');
+                    }
+                  }}
                   style={{
                     padding: '12px 16px',
                     borderBottom: '1px solid #f3f4f6',
