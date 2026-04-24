@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Clock, User, Scissors, X, Check, XCircle, Plus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSidebar } from '../../components/admin';
@@ -32,6 +32,7 @@ export const SchedulePage: React.FC = () => {
     const [showCancelled, setShowCancelled] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<FirestoreAppointment | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
 
     const timeSlots = [
         '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -54,31 +55,39 @@ export const SchedulePage: React.FC = () => {
         setCurrentDate(newDate);
     };
 
-    // Filter appointments for the current day
+    // Filter and optimistically update appointments for the current day
     const dayAppointments = useMemo(() => {
         if (!realAppointments) return [];
         const targetDateStr = currentDate.toDateString();
 
-        return realAppointments.filter(apt => {
+        return realAppointments.map(apt => {
+            // İyimser Güncelleme: UI anında tepki versin
+            if (optimisticUpdates[apt.id]) {
+                return { ...apt, status: optimisticUpdates[apt.id] };
+            }
+            return apt;
+        }).filter(apt => {
             const aptDate = apt.dateTime?.toDate ? apt.dateTime.toDate() : (apt.dateTime as unknown as Date);
             const isCancelled = apt.status === 'cancelled' || apt.status === 'noShow';
             if (isCancelled && !showCancelled) return false;
             return aptDate.toDateString() === targetDateStr;
         });
-    }, [realAppointments, currentDate, showCancelled]);
+    }, [realAppointments, currentDate, showCancelled, optimisticUpdates]);
 
-    const getAppointmentForSlot = (time: string, staffId: string) => {
-        return dayAppointments.find(apt => {
-            if (apt.staffId !== staffId) return false;
-
+    // O(1) Karmaşıklığında Hash Map: Binlerce döngüyü önler
+    const appointmentMap = useMemo(() => {
+        const map = new Map<string, FirestoreAppointment>();
+        dayAppointments.forEach(apt => {
             const aptDate = apt.dateTime?.toDate ? apt.dateTime.toDate() : (apt.dateTime as unknown as Date);
-            const aptTime = aptDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-            // Simple direct match for start time
-            // Improves: check overlaps
-            return aptTime === time;
+            const timeKey = aptDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            map.set(`${timeKey}-${apt.staffId}`, apt);
         });
-    };
+        return map;
+    }, [dayAppointments]);
+
+    const getAppointmentForSlot = useCallback((time: string, staffId: string) => {
+        return appointmentMap.get(`${time}-${staffId}`);
+    }, [appointmentMap]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -116,9 +125,18 @@ export const SchedulePage: React.FC = () => {
 
     const handleUpdateStatus = async (id: string, status: string) => {
         try {
-            await updateAppointmentStatus(id, status);
+            // Optimistic Update: Firestore'u beklemeden arayüzü güncelle
+            setOptimisticUpdates(prev => ({ ...prev, [id]: status }));
             closeDetailModal();
+
+            await updateAppointmentStatus(id, status);
         } catch (error) {
+            // Rollback: Hata olursa geri al
+            setOptimisticUpdates(prev => {
+                const newUpdates = { ...prev };
+                delete newUpdates[id];
+                return newUpdates;
+            });
             console.error("Durum güncellenirken hata:", error);
             showToast(error instanceof Error ? error.message : 'Durum güncellenirken bir hata oluştu.', 'error');
         }

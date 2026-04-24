@@ -311,6 +311,10 @@ export function useCustomers(businessId: string | undefined): UseDataListResult<
 
 // ============ AVAILABILITY HOOKS ============
 
+// Cache mekanizması: SWR (Stale-While-Revalidate) mantığı için basit bir bellek önbelleği
+const slotsCache: Record<string, { data: string[]; timestamp: number }> = {};
+const SLOTS_CACHE_TTL = 30000; // 30 saniye
+
 interface UseAvailableSlotsParams {
   businessId: string | undefined;
   staffId: string | undefined;
@@ -334,13 +338,33 @@ export function useAvailableSlots({
       return;
     }
 
-    try {
+    const cacheKey = `${businessId}_${staffId}_${date.toDateString()}_${durationMinutes}`;
+    const cached = slotsCache[cacheKey];
+
+    // Caching (SWR): Veri bellekte varsa hemen göster
+    if (cached) {
+      setData(cached.data);
+      // Eğer veri taze ise hiç internete çıkma
+      if (Date.now() - cached.timestamp < SLOTS_CACHE_TTL) {
+        return;
+      }
+      // Bayat ise loading spinner göstermeden arka planda çek
+    } else {
       setLoading(true);
+    }
+
+    try {
       setError(null);
       const slots = await getAvailableSlots(businessId, staffId, date, durationMinutes);
+      
+      // Cache'i güncelle
+      slotsCache[cacheKey] = { data: slots, timestamp: Date.now() };
+      
       setData(slots);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Müsait saatler alınamadı.');
+      if (!cached) {
+        setError(err instanceof Error ? err.message : 'Müsait saatler alınamadı.');
+      }
     } finally {
       setLoading(false);
     }
@@ -354,6 +378,10 @@ export function useAvailableSlots({
 }
 
 // ============ DASHBOARD STATS HOOK ============
+
+// Admin paneli için Dashboard cache'i
+const statsCache: Record<string, { data: DashboardStats; timestamp: number }> = {};
+const STATS_CACHE_TTL = 60000; // 1 dakika (60 saniye)
 
 interface DashboardStats {
   todayCount: number;
@@ -375,8 +403,18 @@ export function useDashboardStats(businessId: string | undefined): UseDataResult
       return;
     }
 
-    try {
+    const cached = statsCache[businessId];
+    if (cached) {
+      setData(cached.data);
+      if (Date.now() - cached.timestamp < STATS_CACHE_TTL) {
+        setLoading(false);
+        return;
+      }
+    } else {
       setLoading(true);
+    }
+
+    try {
       setError(null);
 
       const weekStart = new Date();
@@ -393,16 +431,21 @@ export function useDashboardStats(businessId: string | undefined): UseDataResult
 
       const activeToday = todayAppts.filter(a => a.status !== 'cancelled' && a.status !== 'noShow');
 
-      setData({
+      const newData = {
         todayCount: activeToday.length,
         todayRevenue: activeToday.reduce((sum, a) => sum + (a.totalPrice || 0), 0),
         weeklyCount: weeklyAppts.filter(a => a.status !== 'cancelled' && a.status !== 'noShow').length,
         totalCustomers: customers.length,
         pendingCount: todayAppts.filter(a => a.status === 'pending').length,
         confirmedCount: todayAppts.filter(a => a.status === 'confirmed').length,
-      });
+      };
+
+      statsCache[businessId] = { data: newData, timestamp: Date.now() };
+      setData(newData);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'İstatistikler alınamadı.');
+      if (!cached) {
+        setError(err instanceof Error ? err.message : 'İstatistikler alınamadı.');
+      }
     } finally {
       setLoading(false);
     }

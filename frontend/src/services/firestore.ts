@@ -304,7 +304,8 @@ export async function createAppointment(data: BookingFormData & { businessId: st
   // Firestore Web SDK'sında Transaction içinde query yapılamaz.
   // Bu yüzden çakışmaları (race condition) o güne ait tek bir "gölge" dokümanı okuyarak çözüyoruz.
   const appointmentDate = new Date(data.dateTime);
-  const dateString = `${appointmentDate.getFullYear()}-${String(appointmentDate.getMonth() + 1).padStart(2, '0')}-${String(appointmentDate.getDate()).padStart(2, '0')}`;
+  const utcDate = new Date(appointmentDate.getTime() - (appointmentDate.getTimezoneOffset() * 60000));
+  const dateString = utcDate.toISOString().split('T')[0];
 
   const dailyScheduleRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
   const appointmentRef = doc(collection(db, COLLECTIONS.APPOINTMENTS)); // Henüz kaydedilmeyen yeni ID
@@ -312,9 +313,30 @@ export async function createAppointment(data: BookingFormData & { businessId: st
   let businessOwnerId: string | null = null;
 
   await runTransaction(db, async (transaction) => {
+    const newStart = data.dateTime.getTime();
+    const newEnd = newStart + totalDuration * 60000;
+
+    console.log(`[createAppointment] İstek: Start=${new Date(newStart).toISOString()}, End=${new Date(newEnd).toISOString()}, Duration=${totalDuration}m`);
+
     const businessSnap = await transaction.get(doc(db, COLLECTIONS.BUSINESSES, data.businessId));
     if (businessSnap.exists()) {
-      businessOwnerId = businessSnap.data().ownerId;
+      const businessData = businessSnap.data();
+      businessOwnerId = businessData.ownerId;
+      
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = dayNames[appointmentDate.getDay()];
+      const workingHours = businessData.workingHours?.[dayOfWeek];
+      
+      if (!workingHours || !workingHours.isOpen) {
+        throw new Error('İşletme bu gün kapalı.');
+      }
+      
+      const [closeHour, closeMin] = workingHours.closeTime.split(':').map(Number);
+      const closeTimeMs = new Date(appointmentDate).setHours(closeHour, closeMin, 0, 0);
+      
+      if (newEnd > closeTimeMs) {
+        throw new Error('Randevu süresi dükkanın kapanış saatini aşıyor.');
+      }
     }
 
     const dailyScheduleSnap = await transaction.get(dailyScheduleRef);
@@ -323,9 +345,6 @@ export async function createAppointment(data: BookingFormData & { businessId: st
     if (dailyScheduleSnap.exists()) {
       dailyAppointments = dailyScheduleSnap.data().appointments || [];
     }
-
-    const newStart = data.dateTime.getTime();
-    const newEnd = newStart + totalDuration * 60000;
 
     let isConflict = false;
 
@@ -336,6 +355,7 @@ export async function createAppointment(data: BookingFormData & { businessId: st
 
       // Zaman aralığı kesişiyorsa (Overlap formülü)
       if (newStart < aptEnd && newEnd > aptStart) {
+        console.log(`[createAppointment] Olası çakışma yakalandı: Mevcut Randevu=${apt.appointmentId}`);
         // Gerçek randevunun durumunu Transaction içinde oku (Belki iptal edilmiştir)
         const existingAptRef = doc(db, COLLECTIONS.APPOINTMENTS, apt.appointmentId);
         const existingAptSnap = await transaction.get(existingAptRef);
@@ -343,9 +363,14 @@ export async function createAppointment(data: BookingFormData & { businessId: st
         if (existingAptSnap.exists()) {
           const aptStatus = existingAptSnap.data().status;
           if (aptStatus !== 'cancelled' && aptStatus !== 'noShow') {
+            console.log(`[createAppointment] Çakışma kesinleşti: ${apt.appointmentId} (${aptStatus})`);
             isConflict = true;
             break; // Çakışma kesinleşti
+          } else {
+            console.log(`[createAppointment] Mevcut randevu iptal edilmiş veya noShow: ${apt.appointmentId}`);
           }
+        } else {
+          console.log(`[createAppointment] DİKKAT! Hayalet veri (Ghost Record): ${apt.appointmentId} asıl koleksiyonda yok!`);
         }
       }
     }
@@ -428,12 +453,6 @@ export async function updateAppointmentStatus(
     const updateData: Record<string, unknown> = { status, updatedAt: serverTimestamp() };
     if (cancellationReason) updateData.cancellationReason = cancellationReason;
 
-    if (isCustomerCancellation) {
-      await updateDoc(docRef, updateData);
-      await notifyAppointmentStatusChange(appointmentId, appointmentData, status, true);
-      return;
-    }
-
     let updated = false;
     await runTransaction(db, async (t) => {
       const snap = await t.get(docRef);
@@ -442,7 +461,8 @@ export async function updateAppointmentStatus(
       updated = true;
       const data = snap.data();
       const date = data.dateTime.toDate();
-      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const utcDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+      const dateString = utcDate.toISOString().split('T')[0];
       const dailyRef = doc(db, 'daily_schedules', `${data.businessId}_${data.staffId}_${dateString}`);
 
       const dailySnap = await t.get(dailyRef);
@@ -458,7 +478,7 @@ export async function updateAppointmentStatus(
     if (!updated) {
       await updateDoc(docRef, updateData);
     }
-    await notifyAppointmentStatusChange(appointmentId, appointmentData, status, false);
+    await notifyAppointmentStatusChange(appointmentId, appointmentData, status, isCustomerCancellation);
     return;
   }
 
@@ -632,13 +652,17 @@ export async function getAvailableSlots(
 
   // MÜKEMMEL GÜVENLİK: Artık hiçbir şekilde "getAppointments" ile Müşteri Özel Verileri public çekilmiyor!
   // Bunun yerine sadece zaman logunu tutan 'daily_schedules' gölge dokümanı kullanılıyor. (Data Leak engeli)
-  const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const utcDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+  const dateString = utcDate.toISOString().split('T')[0];
   const dailyRef = doc(db, 'daily_schedules', `${businessId}_${staffId}_${dateString}`);
   const dailySnap = await getDoc(dailyRef);
   
   let activeAppointments: DailyScheduleAppointment[] = [];
   if (dailySnap.exists()) {
     activeAppointments = dailySnap.data().appointments || [];
+    console.log(`[getAvailableSlots] ${dateString} için ${activeAppointments.length} aktif randevu bulundu:`, activeAppointments);
+  } else {
+    console.log(`[getAvailableSlots] ${dateString} için günlük program (gölge doküman) henüz oluşturulmamış (boş).`);
   }
 
   // Calculate available slots
@@ -646,11 +670,15 @@ export async function getAvailableSlots(
   const [openHour, openMin] = workingHours.openTime.split(':').map(Number);
   const [closeHour, closeMin] = workingHours.closeTime.split(':').map(Number);
 
-  const currentTime = new Date(date);
-  currentTime.setHours(openHour, openMin, 0, 0);
+  // Timezone Offset Kaymasını Önlemek İçin Sabit UTC+3 (Istanbul) Hesaplaması
+  // dateString'i kullanarak o günün saatini UTC üzerinden oluşturuyoruz.
+  const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Türkiye saati (UTC+3) olduğu için openHour - 3 yaparak gerçek UTC timestamp'ini buluyoruz.
+  const currentTime = new Date(Date.UTC(year, month - 1, day, openHour - 3, openMin, 0, 0));
+  const closeTime = new Date(Date.UTC(year, month - 1, day, closeHour - 3, closeMin, 0, 0));
 
-  const closeTime = new Date(date);
-  closeTime.setHours(closeHour, closeMin, 0, 0);
+  console.log(`[getAvailableSlots] DateString: ${dateString}, OpenUTC: ${currentTime.toISOString()}, CloseUTC: ${closeTime.toISOString()}`);
 
   const now = new Date();
 
@@ -665,9 +693,20 @@ export async function getAvailableSlots(
 
     // Doğrudan gölge dokümanın sızdırılamaz array nesneleri üzerinde overlap kontrolü
     const hasConflict = activeAppointments.some(apt => {
+      // Hata koruması: Geçersiz veriler varsa direkt atla
+      if (!apt || typeof apt.startTime !== 'number' || typeof apt.durationMinutes !== 'number') {
+        console.log(`[getAvailableSlots] HATA: Geçersiz randevu objesi atlandı:`, apt);
+        return false;
+      }
+      
       const aptStart = apt.startTime;
       const aptEnd = aptStart + apt.durationMinutes * 60000;
-      return currentTime.getTime() < aptEnd && slotEnd.getTime() > aptStart;
+      
+      const isOverlap = currentTime.getTime() < aptEnd && slotEnd.getTime() > aptStart;
+      if (isOverlap) {
+        console.log(`[getAvailableSlots] ÇAKIŞMA! Slot: ${currentTime.toISOString()} - ${slotEnd.toISOString()} | Mevcut: ${new Date(aptStart).toISOString()} - ${new Date(aptEnd).toISOString()}`);
+      }
+      return isOverlap;
     });
 
     if (!hasConflict) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './DateTimeSelection.css';
 
@@ -27,15 +27,18 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = useMemo(() => {
+        const t = new Date();
+        t.setHours(0, 0, 0, 0);
+        return t;
+    }, []);
 
-    const getDaysInMonth = (date: Date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
+    const days = useMemo(() => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        const days: (Date | null)[] = [];
+        const daysArray: (Date | null)[] = [];
 
         // Get the day of week for the first day (0 = Sunday, 1 = Monday, etc.)
         let startDay = firstDay.getDay();
@@ -44,47 +47,47 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
 
         // Add empty days for previous month
         for (let i = 0; i < startDay; i++) {
-            days.push(null);
+            daysArray.push(null);
         }
 
         // Add days of current month
         for (let i = 1; i <= lastDay.getDate(); i++) {
-            days.push(new Date(year, month, i));
+            daysArray.push(new Date(year, month, i));
         }
 
-        return days;
-    };
+        return daysArray;
+    }, [currentMonth]);
 
-    const days = getDaysInMonth(currentMonth);
-
-    const isSameDay = (d1: Date | null, d2: Date | null) => {
+    const isSameDay = useCallback((d1: Date | null, d2: Date | null) => {
         if (!d1 || !d2) return false;
         return d1.toDateString() === d2.toDateString();
-    };
+    }, []);
 
-    const isDisabled = (date: Date | null) => {
+    const isDisabled = useCallback((date: Date | null) => {
         if (!date) return true;
         // Basic check: in the past
         return date < today;
-    };
+    }, [today]);
 
-    const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
+    const isCurrentMonth = useMemo(() => {
+        return currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
+    }, [currentMonth, today]);
 
-    const prevMonth = () => {
+    const prevMonth = useCallback(() => {
         if (!isCurrentMonth) {
             setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
         }
-    };
+    }, [currentMonth, isCurrentMonth]);
 
-    const nextMonth = () => {
+    const nextMonth = useCallback(() => {
         setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-    };
+    }, [currentMonth]);
 
-    // Group slots by period
-    const getGroupedSlots = () => {
-        const morning: { display: string, iso: string }[] = [];
-        const afternoon: { display: string, iso: string }[] = [];
-        const evening: { display: string, iso: string }[] = [];
+    // Group slots by period (Memoized to prevent unnecessary recalculations on hover/selection)
+    const { morning, afternoon, evening } = useMemo(() => {
+        const m: { display: string, iso: string }[] = [];
+        const a: { display: string, iso: string }[] = [];
+        const e: { display: string, iso: string }[] = [];
 
         availableSlots.forEach(iso => {
             const date = new Date(iso);
@@ -110,18 +113,16 @@ export const DateTimeSelection: React.FC<DateTimeSelectionProps> = ({
             const slot = { display: timeStr, iso };
 
             if (hour < 12) {
-                morning.push(slot);
+                m.push(slot);
             } else if (hour < 17) {
-                afternoon.push(slot);
+                a.push(slot);
             } else {
-                evening.push(slot);
+                e.push(slot);
             }
         });
 
-        return { morning, afternoon, evening };
-    };
-
-    const { morning, afternoon, evening } = getGroupedSlots();
+        return { morning: m, afternoon: a, evening: e };
+    }, [availableSlots]);
     const hasSlots = morning.length > 0 || afternoon.length > 0 || evening.length > 0;
 
     return (

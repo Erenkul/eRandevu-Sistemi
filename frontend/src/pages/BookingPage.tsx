@@ -112,7 +112,11 @@ export const BookingPage: React.FC = () => {
             setIsSubmitting(true);
             setError(null);
 
-            const appointmentId = await createAppointment({
+            const timeoutPromise = new Promise<string>((_, reject) => 
+                setTimeout(() => reject(new Error("Bağlantı zaman aşımına uğradı. Lütfen internetinizi kontrol edip tekrar deneyin.")), 15000)
+            );
+
+            const appointmentPromise = createAppointment({
                 businessId: business.id,
                 services: selectedServices,
                 staffId: selectedStaff.id,
@@ -123,6 +127,8 @@ export const BookingPage: React.FC = () => {
                 customerEmail: contactData.email || undefined,
                 customerNote: contactData.note || undefined,
             });
+
+            const appointmentId = await Promise.race([appointmentPromise, timeoutPromise]);
 
             setConfirmationCode(appointmentId.slice(0, 8).toUpperCase());
             setIsConfirmed(true);
