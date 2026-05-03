@@ -549,13 +549,13 @@ describe('getAvailableSlots', () => {
 
   it('excludes conflicting slots', async () => {
     const monday = new Date('2030-06-18T10:00:00Z');
-    // Conflict at local 09:00 on June 18, 2030
-    const openTime = new Date('2030-06-18T09:00:00');
+    // 09:00 TR time is 06:00 UTC
+    const conflictTime = new Date('2030-06-18T06:00:00Z');
 
     // Existing appointment blocks 09:00
     const activeAppointments = [{
       appointmentId: 'existing-1',
-      startTime: openTime.getTime(),
+      startTime: conflictTime.getTime(),
       durationMinutes: 30,
     }];
 

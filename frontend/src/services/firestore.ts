@@ -670,15 +670,12 @@ export async function getAvailableSlots(
   const [openHour, openMin] = workingHours.openTime.split(':').map(Number);
   const [closeHour, closeMin] = workingHours.closeTime.split(':').map(Number);
 
-  // Timezone Offset Kaymasını Önlemek İçin Sabit UTC+3 (Istanbul) Hesaplaması
-  // dateString'i kullanarak o günün saatini UTC üzerinden oluşturuyoruz.
-  const [year, month, day] = dateString.split('-').map(Number);
-  
-  // Türkiye saati (UTC+3) olduğu için openHour - 3 yaparak gerçek UTC timestamp'ini buluyoruz.
-  const currentTime = new Date(Date.UTC(year, month - 1, day, openHour - 3, openMin, 0, 0));
-  const closeTime = new Date(Date.UTC(year, month - 1, day, closeHour - 3, closeMin, 0, 0));
+  // Türkiye saati (+03:00) baz alınarak ISO formatında date objeleri oluşturulur.
+  // Bu sayede sunucunun yerel saati ne olursa olsun her zaman doğru TR saat dilimi kullanılır.
+  const currentTime = new Date(`${dateString}T${workingHours.openTime}:00+03:00`);
+  const closeTime = new Date(`${dateString}T${workingHours.closeTime}:00+03:00`);
 
-  console.log(`[getAvailableSlots] DateString: ${dateString}, OpenUTC: ${currentTime.toISOString()}, CloseUTC: ${closeTime.toISOString()}`);
+  console.log(`[getAvailableSlots] DateString: ${dateString}, Open (ISO): ${currentTime.toISOString()}, Close (ISO): ${closeTime.toISOString()}`);
 
   const now = new Date();
 

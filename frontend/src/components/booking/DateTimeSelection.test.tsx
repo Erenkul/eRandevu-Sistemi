@@ -66,14 +66,18 @@ describe('DateTimeSelection Component', () => {
     it('renders time slots correctly divided by periods', () => {
         // Yerel saat dilimi farklılıklarından etkilenmemek için (örn CI sunucusu UTC, geliştirici UTC+3)
         // tarihleri new Date() ile doğrudan ilgili saate göre oluşturup ISO string ini alıyoruz.
-        const baseDate = new Date();
-        baseDate.setHours(9, 0, 0, 0);
+        const baseDate = new Date('2030-06-18T10:00:00Z');
+        
+        // 06:00 UTC = 09:00 TR (Sabah)
+        baseDate.setUTCHours(6, 0, 0, 0);
         const morningIso = baseDate.toISOString();
         
-        baseDate.setHours(14, 30, 0, 0);
+        // 11:30 UTC = 14:30 TR (Öğleden Sonra)
+        baseDate.setUTCHours(11, 30, 0, 0);
         const afternoonIso = baseDate.toISOString();
         
-        baseDate.setHours(19, 0, 0, 0);
+        // 16:00 UTC = 19:00 TR (Akşam)
+        baseDate.setUTCHours(16, 0, 0, 0);
         const eveningIso = baseDate.toISOString();
 
         const slots = [morningIso, afternoonIso, eveningIso];
