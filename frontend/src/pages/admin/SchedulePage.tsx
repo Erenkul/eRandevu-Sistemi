@@ -7,7 +7,7 @@ import './SchedulePage.css';
 import { useAuth, useToast } from '../../contexts';
 import { useRealtimeAppointments, useStaff, useBusiness } from '../../hooks';
 import { updateAppointmentStatus } from '../../services/firestore';
-import type { Appointment as FirestoreAppointment } from '../../types';
+import type { Appointment as FirestoreAppointment, AppointmentStatus } from '../../types';
 
 export const SchedulePage: React.FC = () => {
     const navigate = useNavigate();
@@ -32,7 +32,7 @@ export const SchedulePage: React.FC = () => {
     const [showCancelled, setShowCancelled] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<FirestoreAppointment | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
+    const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, AppointmentStatus>>({});
 
     const timeSlots = [
         '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -123,7 +123,7 @@ export const SchedulePage: React.FC = () => {
         setSelectedAppointment(null);
     };
 
-    const handleUpdateStatus = async (id: string, status: string) => {
+    const handleUpdateStatus = async (id: string, status: AppointmentStatus) => {
         try {
             // Optimistic Update: Firestore'u beklemeden arayüzü güncelle
             setOptimisticUpdates(prev => ({ ...prev, [id]: status }));
