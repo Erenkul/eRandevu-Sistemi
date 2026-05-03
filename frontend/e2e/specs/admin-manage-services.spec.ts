@@ -46,8 +46,7 @@ test.describe('Service Management', () => {
 
     await servicesPage.goto();
 
-    const initialCount = await page.locator('.service-card:not(.add-card)').count();
-    if (initialCount > 1) {
+    if (await page.locator('.service-card:not(.add-card)').count() > 1) {
       await servicesPage.deleteFirstService();
       await page.waitForTimeout(1000);
     }

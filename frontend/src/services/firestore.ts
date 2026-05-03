@@ -179,7 +179,7 @@ export async function deleteStaff(staffId: string): Promise<void> {
 
 async function notifyAppointmentStatusChange(
   appointmentId: string,
-  appointmentData: any,
+  appointmentData: Partial<Appointment>,
   newStatus: string,
   cancelledByCustomer: boolean
 ): Promise<void> {
@@ -237,7 +237,7 @@ async function notifyAppointmentStatusChange(
       title,
       message,
       appointmentId,
-      businessId: appointmentData.businessId,
+      businessId: appointmentData.businessId as string,
     });
   } catch (error) {
     console.error('[Notify] Error creating notification:', error);

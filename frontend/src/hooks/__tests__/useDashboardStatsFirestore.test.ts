@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useDashboardStats } from '../useFirestore';
+import { useDashboardStats, clearStatsCache } from '../useFirestore';
 import { mockAppointment, mockCustomer } from '../../test/fixtures';
 
 vi.mock('../../services/firestore', () => ({
@@ -15,7 +15,10 @@ const mockGetAppointments = vi.mocked(getAppointments);
 const mockGetCustomers = vi.mocked(getCustomers);
 
 describe('useDashboardStats (useFirestore)', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearStatsCache();
+  });
 
   it('returns null when businessId is undefined', async () => {
     const { result } = renderHook(() => useDashboardStats(undefined));

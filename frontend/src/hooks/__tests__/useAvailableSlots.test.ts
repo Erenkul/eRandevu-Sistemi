@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useAvailableSlots } from '../useFirestore';
+import { useAvailableSlots, clearSlotsCache } from '../useFirestore';
 
 vi.mock('../../services/firestore', () => ({
   getAvailableSlots: vi.fn(),
@@ -21,6 +21,7 @@ const mockSlots = ['2025-06-15T09:00:00', '2025-06-15T09:30:00', '2025-06-15T10:
 describe('useAvailableSlots', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearSlotsCache();
   });
 
   it('returns empty state when businessId is missing', () => {

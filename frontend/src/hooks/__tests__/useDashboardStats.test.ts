@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useDashboardStats } from '../useFirestore';
+import { useDashboardStats, clearStatsCache } from '../useFirestore';
 import { mockAppointment, mockAppointmentPending, mockCustomer } from '../../test/fixtures';
 
 vi.mock('../../services/firestore', () => ({
@@ -17,6 +17,7 @@ const mockGetCustomers = vi.mocked(getCustomers);
 describe('useDashboardStats', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearStatsCache();
   });
 
   it('returns null data when businessId is undefined', () => {

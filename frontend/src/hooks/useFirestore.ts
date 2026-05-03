@@ -315,6 +315,14 @@ export function useCustomers(businessId: string | undefined): UseDataListResult<
 const slotsCache: Record<string, { data: string[]; timestamp: number }> = {};
 const SLOTS_CACHE_TTL = 30000; // 30 saniye
 
+export function clearSlotsCache() {
+  Object.keys(slotsCache).forEach(key => delete slotsCache[key]);
+}
+
+export function clearStatsCache() {
+  Object.keys(statsCache).forEach(key => delete statsCache[key]);
+}
+
 interface UseAvailableSlotsParams {
   businessId: string | undefined;
   staffId: string | undefined;

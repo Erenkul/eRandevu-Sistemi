@@ -26,3 +26,8 @@ Sorunlar
 -işletmelerin sahip olduğu servislere ait fiyar bilgisi işletmeye bağlı olarka gözükebilmelii
 -numara girişindeki 0 kalkmalı 
 -onboarding de bulunan personel ekleme kısmında personellerin telefon numaraları daha az ya da daha fazlaa olabiliyor
+
+
+
+## auth üstü hash bilgilerine dikkat et konu önemli 
+## firebase güvenlik açıkları 

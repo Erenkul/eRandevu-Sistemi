@@ -3,9 +3,16 @@ import type { Business } from '../../types';
 import { mockBusiness, mockService, mockStaff } from '../../test/fixtures';
 
 // ── Mock firebase/firestore before importing the service ──────────────────────
+const mockDocReturnValues: Record<string, { id: string; path: string }> = {};
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => 'collection-ref'),
-  doc: vi.fn((_db, _col, id) => ({ id, path: `${_col}/${id}` })),
+  doc: vi.fn((_db: any, _col: string, id: string) => {
+    const key = `${_col}/${id}`;
+    if (!mockDocReturnValues[key]) {
+      mockDocReturnValues[key] = { id, path: key };
+    }
+    return mockDocReturnValues[key];
+  }),
   getDoc: vi.fn(),
   getDocs: vi.fn(),
   addDoc: vi.fn(),
@@ -590,11 +597,24 @@ describe('createAppointment', () => {
     customerNote: 'First visit',
   };
 
+  const mockBusinessData = {
+    ownerId: 'owner-1',
+    workingHours: {
+      monday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      tuesday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      wednesday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      thursday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      friday: { isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      saturday: { isOpen: false, openTime: '10:00', closeTime: '17:00' },
+      sunday: { isOpen: false, openTime: '10:00', closeTime: '14:00' },
+    },
+  };
+
   it('creates appointment successfully when no conflicts exist', async () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
         get: vi.fn()
-          .mockResolvedValueOnce({ exists: () => true, data: () => ({ ownerId: 'owner-1' }) }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => true, data: () => mockBusinessData }) // businessSnap
           .mockResolvedValueOnce({ exists: () => false }), // dailyScheduleSnap
         set: vi.fn(),
         update: vi.fn(),
@@ -621,7 +641,7 @@ describe('createAppointment', () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
         get: vi.fn()
-          .mockResolvedValueOnce({ exists: () => true, data: () => ({ ownerId: 'owner-1' }) }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => true, data: () => mockBusinessData }) // businessSnap
           .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) }) // dailyScheduleSnap
           .mockResolvedValueOnce({ // for the appointment in the loop
             exists: () => true,
@@ -650,7 +670,8 @@ describe('createAppointment', () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
         get: vi.fn()
-          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
+          .mockResolvedValueOnce({ exists: () => true, data: () => mockBusinessData }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) }) // dailyScheduleSnap
           .mockResolvedValueOnce({
             exists: () => true,
             data: () => ({ status: 'cancelled' }),
@@ -661,6 +682,7 @@ describe('createAppointment', () => {
       await fn(mockTx);
     });
     mockRunTransaction.mockImplementation(transactionMock);
+    mockAddDoc.mockResolvedValueOnce({ id: 'notif-1' } as any);
 
     const result = await createAppointment(baseBookingData);
 
@@ -679,7 +701,8 @@ describe('createAppointment', () => {
     const transactionMock = vi.fn().mockImplementation(async (_db, fn) => {
       const mockTx = {
         get: vi.fn()
-          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) })
+          .mockResolvedValueOnce({ exists: () => true, data: () => mockBusinessData }) // businessSnap
+          .mockResolvedValueOnce({ exists: () => true, data: () => ({ appointments: activeAppointments }) }) // dailyScheduleSnap
           .mockResolvedValueOnce({
             exists: () => true,
             data: () => ({ status: 'noShow' }),
@@ -690,6 +713,7 @@ describe('createAppointment', () => {
       await fn(mockTx);
     });
     mockRunTransaction.mockImplementation(transactionMock);
+    mockAddDoc.mockResolvedValueOnce({ id: 'notif-2' } as any);
 
     const result = await createAppointment(baseBookingData);
 

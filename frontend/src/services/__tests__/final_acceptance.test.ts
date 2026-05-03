@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createAppointment, updateAppointmentStatus, getAvailableSlots } from '../firestore';
-import { doc, getDoc, runTransaction, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { createAppointment, updateAppointmentStatus } from '../firestore';
+import { getDoc, runTransaction } from 'firebase/firestore';
 
 // Mock Firebase
 vi.mock('firebase/firestore', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('firebase/firestore')>();
   return {
     ...actual,
     collection: vi.fn(),

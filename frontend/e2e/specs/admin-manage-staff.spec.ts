@@ -46,8 +46,7 @@ test.describe('Staff Management', () => {
 
     await staffPage.goto();
 
-    const initialCount = await page.locator('.staff-card:not(.add-card), .staff-item').count();
-    if (initialCount > 1) {
+    if (await page.locator('.staff-card:not(.add-card), .staff-item').count() > 1) {
       await staffPage.deleteFirstStaff();
       await page.waitForTimeout(1000);
     }

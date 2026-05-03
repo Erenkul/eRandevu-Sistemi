@@ -50,10 +50,14 @@ describe('SchedulePage', () => {
         },
     ];
 
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const mockAppointments = [
         {
             id: 'apt-1',
-            dateTime: { toDate: () => new Date(2026, 3, 13, 9, 0) },
+            dateTime: { toDate: () => new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0) },
             staffId: 'staff-1',
             customerName: 'Ali Veli',
             customerPhone: '532 123 45 67',
@@ -66,7 +70,7 @@ describe('SchedulePage', () => {
         },
         {
             id: 'apt-2',
-            dateTime: { toDate: () => new Date(2026, 3, 13, 10, 0) },
+            dateTime: { toDate: () => new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0) },
             staffId: 'staff-2',
             customerName: 'Ayşe Yılmaz',
             customerPhone: '534 987 65 43',
