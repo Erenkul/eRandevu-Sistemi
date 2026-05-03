@@ -199,6 +199,7 @@ export function useAppointments(
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, filters?.staffId, filters?.status, filters?.startDate?.getTime(), filters?.endDate?.getTime()]);
 
   useEffect(() => {
@@ -376,6 +377,7 @@ export function useAvailableSlots({
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, staffId, date?.toDateString(), durationMinutes]);
 
   useEffect(() => {

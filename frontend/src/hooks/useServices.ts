@@ -17,6 +17,7 @@ export function useServices(businessId: string | undefined, includeInactive = fa
 
     useEffect(() => {
         if (!businessId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setData([]);
             return;
         }

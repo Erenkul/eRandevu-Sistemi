@@ -17,6 +17,7 @@ export function useStaff(businessId: string | undefined): UseStaffResult {
 
     useEffect(() => {
         if (!businessId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setData([]);
             return;
         }

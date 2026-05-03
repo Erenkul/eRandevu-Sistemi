@@ -23,6 +23,7 @@ export function useDashboardStats(businessId: string | undefined): UseDashboardS
 
     useEffect(() => {
         if (!businessId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setData(null);
             return;
         }

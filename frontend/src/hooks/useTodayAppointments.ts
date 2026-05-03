@@ -15,6 +15,7 @@ export function useTodayAppointments(businessId: string | undefined): UseTodayAp
 
     useEffect(() => {
         if (!businessId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setData([]);
             return;
         }

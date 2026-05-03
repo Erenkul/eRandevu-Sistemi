@@ -667,8 +667,7 @@ export async function getAvailableSlots(
 
   // Calculate available slots
   const slots: string[] = [];
-  const [openHour, openMin] = workingHours.openTime.split(':').map(Number);
-  const [closeHour, closeMin] = workingHours.closeTime.split(':').map(Number);
+
 
   // Türkiye saati (+03:00) baz alınarak ISO formatında date objeleri oluşturulur.
   // Bu sayede sunucunun yerel saati ne olursa olsun her zaman doğru TR saat dilimi kullanılır.
