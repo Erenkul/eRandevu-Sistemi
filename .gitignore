@@ -7,3 +7,10 @@ dist
 frontend/coverage/
 functions/lib/
 
+
+# Yerel ortam ayarları ve Firebase emülatör kayıtları depoya girmez
+.env.local
+*.env.local
+firebase-debug.log
+firestore-debug.log
+*-debug.log
